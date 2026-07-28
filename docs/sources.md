@@ -22,8 +22,14 @@ immediately before installing or updating software.
 
 - Source: https://github.com/Atmosphere-NX/Atmosphere
 - Primary project repository.
-- GitHub showed release `1.11.1` dated 2026-04-07 when checked.
+- The official changelog begins with `1.11.2` when checked.
 - Recheck the current release and compatibility notes before any installation.
+
+### Atmosphere cheat specification
+
+- Source: https://github.com/Atmosphere-NX/Atmosphere/blob/master/docs/features/cheats.md
+- Primary definition of cheat-file behavior and opcode encoding.
+- Recheck this specification before generating or reviewing opcodes.
 
 ### EdiZon-SE
 
@@ -43,6 +49,21 @@ immediately before installing or updating software.
   search, to cheat-code generation.
 - Its quick-start examples are conceptual references; verify button prompts and
   tool compatibility against the actual installed versions.
+
+### Eden
+
+- Sources: https://eden-emu.dev/ and
+  https://git.eden-emu.dev/eden-emu/eden
+- Primary project pages for current releases and documentation.
+- Current releases expose mod/cheat importing, but verify the installed
+  version's UI and per-game path before giving instructions.
+
+### Ryujinx-family documentation
+
+- Source: https://docs.ryujinx.app/guides/setup-guide/#managing-cheats
+- Current documentation describes per-game Atmosphere-style cheat management.
+- It explicitly excludes Atmosphere pause/resume cheat opcodes, so generated
+  codes targeting this runtime must avoid them.
 
 ## Curriculum
 

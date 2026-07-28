@@ -1,0 +1,4 @@
+interface:
+  display_name: "Develop Switch Cheats"
+  short_description: "Build offline Switch cheats for hardware or emulators"
+  default_prompt: "Use $develop-switch-cheats to guide an offline cheat-development session for my legally owned Switch game."

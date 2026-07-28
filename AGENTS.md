@@ -6,6 +6,12 @@ This repository is a beginner-friendly, evidence-driven workspace for learning h
 to create personal Nintendo Switch cheats for legally owned, offline
 single-player games.
 
+For Switch-specific cheat development, use the repo-local
+`.agents/skills/develop-switch-cheats/SKILL.md`. Route physical
+Atmosphere/EdiZon-SE work and Windows Eden/Ryujinx work through the separate
+references selected by that skill. Do not substitute the generic PC-game
+workflow when the Switch-specific skill applies.
+
 Use the CheatSlips learning guide as the conceptual curriculum:
 
 - https://cheatslips.com/wiki/start

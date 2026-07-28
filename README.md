@@ -13,6 +13,8 @@ stability validation without hiding the evidence needed to trust a result.
 The repository is in its initial planning and game-intake stage:
 
 - safety and research rules are defined in `AGENTS.md`;
+- a repo-local `develop-switch-cheats` skill now separates physical
+  EdiZon-SE and Windows Eden/Ryujinx workflows;
 - the user's automation preference is recorded in `USER_PROFILE.md`;
 - `Legend of Mana` is the tentative first game;
 - no scanner or device adapter has been implemented;
@@ -84,6 +86,8 @@ before it performs the next automated comparison.
 ## Repository layout
 
 ```text
+.agents/skills/develop-switch-cheats/  Switch-specific AI workflow skill
+  references/                         Hardware, emulator, and cheat-file tracks
 AGENTS.md                         AI operating and safety instructions
 README.md                         Project overview and starting point
 USER_PROFILE.md                   Non-secret user/platform preferences
