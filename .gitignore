@@ -1,0 +1,18 @@
+# Raw or private research material
+local/
+**/dumps/
+**/private/
+**/saves/
+*.dmp
+*.memdump
+*.ram
+
+# Keys and credentials must never enter this repository
+*.keys
+prod.keys
+title.keys
+
+# Local Python tooling
+.venv/
+__pycache__/
+*.pyc
