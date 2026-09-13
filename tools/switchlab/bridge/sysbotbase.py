@@ -27,6 +27,31 @@ class BridgeError(RuntimeError):
     """Raised when the bridge cannot be reached or answers unexpectedly."""
 
 
+# Horizon kernel result descriptions (module 1) that matter for attaching.
+_KERNEL_DESCRIPTIONS = {
+    114: "InvalidHandle",
+    121: "NotFound",
+    122: "Busy",
+    125: "InvalidState",
+    517: "InvalidProcessId",
+}
+
+
+def decode_result(rc: int) -> str:
+    """Explain a Horizon result code as printed by sys-botbase (decimal)."""
+    module = rc & 0x1FF
+    description = rc >> 9
+    if rc == 0:
+        return "0 (success)"
+    if module == 1:
+        name = _KERNEL_DESCRIPTIONS.get(description, f"description {description}")
+        return f"0x{rc:X} kernel {name}"
+    return f"0x{rc:X} module {module} description {description}"
+
+
+ALREADY_DEBUGGED = 0xF401  # kernel Busy from svcDebugActiveProcess
+
+
 def parse_hex_bytes(line: str) -> bytes:
     """Turn a sys-botbase hex line into bytes. Empty line means failed read."""
     text = line.strip()
@@ -117,6 +142,75 @@ class SysBotBase:
             raise BridgeError("connection closed by the Switch")
         return raw.decode("ascii", errors="replace").rstrip("\r\n")
 
+    def _send(self, cmd: str) -> None:
+        """Send a command that produces no reply (only `configure`)."""
+        if self._sock is None:
+            raise BridgeError("not connected")
+        if not cmd.startswith("configure "):
+            raise BridgeError("_send is only for configure commands")
+        self._sock.sendall((cmd + "\r\n").encode("ascii"))
+
+    def _command_lines(self, cmd: str, stop) -> list:
+        """Send a command and collect reply lines until `stop(line)` is true."""
+        if self._sock is None or self._reader is None:
+            raise BridgeError("not connected")
+        self._sock.settimeout(self.timeout)
+        self._sock.sendall((cmd + "\r\n").encode("ascii"))
+        lines = []
+        try:
+            while True:
+                raw = self._reader.readline(_MAX_LINE_HINT)
+                if not raw:
+                    raise BridgeError("connection closed by the Switch")
+                line = raw.decode("ascii", errors="replace").rstrip("\r\n")
+                lines.append(line)
+                if stop(line) or len(lines) > 16:
+                    return lines
+        except socket.timeout as exc:
+            raise BridgeError(f"timeout waiting for reply to {cmd!r}") from exc
+
+    # -- diagnostics -------------------------------------------------------
+    def diagnose(self) -> dict:
+        """Ask sys-botbase for its kernel result codes on one attach attempt.
+
+        Temporarily enables the sysmodule's debug-code printing and always
+        turns it back off. Returns a dict with `codes` ({svc: rc}), `attached`
+        (bool), and a human `verdict`.
+        """
+        self._send("configure printDebugResultCodes 1")
+        try:
+            lines = self._command_lines(
+                "getHeapBase", lambda ln: ln == "" or (len(ln) == 16 and all(c in "0123456789ABCDEF" for c in ln))
+            )
+        finally:
+            self._send("configure printDebugResultCodes 0")
+        codes = {}
+        for ln in lines:
+            if ":" in ln:
+                name, _, num = ln.partition(":")
+                try:
+                    codes[name.strip()] = int(num.strip())
+                except ValueError:
+                    pass
+        attach_rc = codes.get("svcDebugActiveProcess", 0)
+        attached = attach_rc == 0
+        if attached and codes.get("svcGetInfo", 0) == 0:
+            verdict = "the bridge can attach to the game; memory reads should work"
+        elif attach_rc == ALREADY_DEBUGGED:
+            verdict = (
+                "the game is already being debugged by something else (kernel Busy). "
+                "Usual cause: Atmosphere's cheat manager attached at launch because a cheat file "
+                "exists for this Build ID, or EdiZon-SE / Breeze / a cheat overlay opened the game. "
+                "Move the title's cheats folder aside and relaunch the game, or close the other tool."
+            )
+        elif attach_rc:
+            verdict = f"attach failed: svcDebugActiveProcess -> {decode_result(attach_rc)}"
+        else:
+            verdict = "attach succeeded but the handle was rejected: " + ", ".join(
+                f"{k} -> {decode_result(v)}" for k, v in codes.items() if v
+            )
+        return {"codes": codes, "attached": attached and not any(codes.values()), "verdict": verdict, "lines": lines}
+
     # -- identity (all read-only) -----------------------------------------
     def get_version(self) -> str:
         return self.command("getVersion")
@@ -157,7 +251,8 @@ class SysBotBase:
         if len(data) != size:
             raise BridgeError(
                 f"{verb} 0x{address:X} {size}: expected {size} bytes, got {len(data)} "
-                "(empty means the read failed, e.g. unmapped page or a debugger already attached)"
+                "(empty means the read failed: unmapped page, or another debugger holds the game; "
+                "run `switchlab diagnose`)"
             )
         return data
 

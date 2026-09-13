@@ -120,3 +120,52 @@ def test_module_has_no_write_commands():
     text = (Path("tools") / src.with_suffix(".py")).read_text()
     for banned in ("poke", "freeze", "click", "press", "setStick", "touch"):
         assert f'"{banned}' not in text, f"write/input command {banned!r} found in read-only client"
+
+
+class QueueReader:
+    """Reader that serves scripted multi-line replies per command."""
+
+    def __init__(self, sock, script):
+        self.sock = sock
+        self.script = script  # {cmd: [lines]}
+        self.pending = []
+
+    def readline(self, _hint=None):
+        if not self.pending:
+            cmd = self.sock.sent[-1].decode().strip().split()[0]
+            self.pending = list(self.script[cmd])
+        return self.pending.pop(0).encode() + b"\n"
+
+    def close(self):
+        pass
+
+
+def test_decode_result():
+    from switchlab.bridge.sysbotbase import decode_result
+
+    assert decode_result(62465) == "0xF401 kernel Busy"
+    assert decode_result(58369) == "0xE401 kernel InvalidHandle"
+    assert decode_result(0) == "0 (success)"
+
+
+def test_diagnose_reports_already_debugged_and_restores_setting():
+    client = SysBotBase("203.0.113.1")
+    client._sock = FakeSocket({})
+    client._reader = QueueReader(
+        client._sock, {"getHeapBase": ["svcDebugActiveProcess: 62465", "svcGetInfo: 58369", "0000000000000004"]}
+    )
+    report = client.diagnose()
+    assert report["attached"] is False
+    assert report["codes"]["svcDebugActiveProcess"] == 62465
+    assert "already being debugged" in report["verdict"]
+    assert client._sock.sent[0] == b"configure printDebugResultCodes 1\r\n"
+    assert client._sock.sent[-1] == b"configure printDebugResultCodes 0\r\n"
+
+
+def test_diagnose_reports_healthy_attach():
+    client = SysBotBase("203.0.113.1")
+    client._sock = FakeSocket({})
+    client._reader = QueueReader(client._sock, {"getHeapBase": ["0000004000000000"]})
+    report = client.diagnose()
+    assert report["attached"] is True
+    assert "should work" in report["verdict"]

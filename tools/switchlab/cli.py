@@ -6,7 +6,7 @@ import argparse
 import os
 import sys
 
-from switchlab.bridge.sysbotbase import BridgeError, SysBotBase
+from switchlab.bridge.sysbotbase import BridgeError, SysBotBase, decode_result
 from switchlab.identity import read_identity
 from switchlab.screen import capture_screenshot
 
@@ -26,7 +26,19 @@ def cmd_status(args: argparse.Namespace) -> int:
         print("No game is running (identity fields are empty).")
         return 1
     print(ident.describe())
+    if ident.heap_base < 0x1000:
+        print("warning: heap base looks invalid; another debugger probably holds the game. Run: switchlab diagnose")
+        return 1
     return 0
+
+
+def cmd_diagnose(args: argparse.Namespace) -> int:
+    with SysBotBase(_host(args), args.port) as client:
+        report = client.diagnose()
+    for name, rc in report["codes"].items():
+        print(f"{name:26} {rc} = {decode_result(rc)}")
+    print(f"verdict: {report['verdict']}")
+    return 0 if report["attached"] else 1
 
 
 def cmd_screenshot(args: argparse.Namespace) -> int:
@@ -61,6 +73,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("status", help="show bridge version and the running game's identity")
     s.set_defaults(func=cmd_status)
+
+    s = sub.add_parser("diagnose", help="explain why memory reads fail (kernel result codes)")
+    s.set_defaults(func=cmd_diagnose)
 
     s = sub.add_parser("screenshot", help="save the current screen to local/screens/")
     s.add_argument("--label", default="screen")
