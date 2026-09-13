@@ -12,21 +12,24 @@ Stages: `not started`, `searching`, `candidates`, `confirmed`, `stable`,
 it passes the definition of done in `AGENTS.md`, which includes a full game
 relaunch.
 
+Known starting values, from a screenshot taken 2026-09-13 on the first dungeon
+floor: character Kuro, HP 100/100, AP 084, Lv 1.
+
 ## Status
 
 | Cheat | Stage | Address form | Next step |
 |---|---|---|---|
 | Max Money | not started | none | read the visible amount, then exact search |
-| Max Attack | not started | none | wait for money to prove the pipeline |
-| God Mode (HP lock) | not started | none | find current and max HP together |
-| God Mode (damage patch) | not started | none | needs the HP address first |
-| Walk/Run Speed x2 | not started | none | look for a float near the player struct |
-| EXP x2 | not started | none | needs the EXP-add instruction |
-| EXP x4 | not started | none | same patch site as x2 |
-| EXP x8 | not started | none | same patch site as x2 |
-| EXP x16 | not started | none | same patch site as x2 |
+| Max HP | not started | none | find the pair 100/100 and identify which is the cap |
+| Full Heal | not started | none | same search as Max HP |
+| Infinite HP | not started | none | needs the current-HP address |
+| Max Stats | not started | none | open the status screen and read each stat |
+| God Mode (damage patch) | not started | none | needs the current-HP address first |
+| Walk/Run Speed x2 | not started | none | look for a float near the player structure |
+| EXP x2, x4, x8, x16 | not started | none | needs the EXP-add instruction |
 | EXP x100 | not started | none | same patch site, multiply instead of shift |
 | Fast Forward | not started | none | confirm a speed or delta-time value exists |
+| Infinite AP (candidate) | not started | none | confirm what AP does before agreeing to it |
 
 ## Max Money
 
@@ -38,41 +41,82 @@ relaunch.
 - Original value: none
 - Cheat code: none
 - Survived relaunch: not tested
-- Notes: first target, chosen because it proves the search pipeline end to end.
+- Notes: first target, because it proves the search pipeline end to end without
+  risking anything. Write a large safe value, not the type maximum.
 - Next step: user reaches a screen showing money, I read it from a screenshot
   and run an exact search.
 
-## Max Attack
+## The HP family
+
+These four are separate cheats that promise different things. Build them in the
+order below, because each one produces the information the next one needs.
+
+### Max HP
 
 - Stage: not started
-- Notes: may be derived from equipment rather than stored, in which case the
-  stored value is overwritten on recalculation and needs a lock.
-- Next step: after money is verified.
+- Target: the maximum-HP field, currently 100
+- Notes: raises the ceiling only. After the write the player is at 100/9999
+  until healed. If the game derives maximum HP from level or equipment, the
+  write gets replaced on the next recalculation and the source has to be
+  targeted instead, or the value locked.
+- Verification: open the status screen and confirm the new maximum, then heal
+  and confirm current HP can actually reach it.
+- Next step: search for 100 and expect two nearby addresses, current and
+  maximum. Take damage to tell them apart: current changes, maximum does not.
 
-## God Mode (HP lock)
-
-- Stage: not started
-- Notes: current HP and maximum HP usually sit next to each other. Find both.
-  Locking current HP to maximum is not true invulnerability, because the game
-  still applies damage and the lock overwrites it a moment later.
-- Next step: after money is verified. HP was visible as 100/100 in an earlier
-  screenshot, so it is easy to observe.
-
-## God Mode (damage patch)
+### Full Heal
 
 - Stage: not started
-- Notes: replace the instruction that subtracts damage from HP. Requires the HP
-  address first, then finding the code that writes to it. Record the original
-  instruction and provide an OFF code.
-- Next step: after the HP lock works.
+- Target: the current-HP field
+- Notes: a single write setting current HP to maximum. Not a lock. This is the
+  quickest test that the current-HP address is correct.
+- Next step: after the current/maximum pair is identified.
+
+### Infinite HP
+
+- Stage: not started
+- Target: the current-HP field, rewritten every frame
+- Notes: the game still applies damage and the lock overwrites it a moment
+  later, so the bar may visibly dip. This does not prevent death from anything
+  that bypasses the HP value: instant-death effects, scripted deaths, falling,
+  or a death check that runs between the game's write and ours.
+- Verification: take a real hit from an enemy and confirm survival. A number
+  that stays at 100 on screen is not proof on its own.
+- Next step: after Full Heal confirms the address.
+
+### God Mode (damage patch)
+
+- Stage: not started
+- Target: the instruction that subtracts damage from HP
+- Notes: the bar never moves at all, because nothing ever writes a reduced
+  value. Stronger than Infinite HP. Still does not cover damage on a different
+  code path, or deaths that never touch HP. Record the original instruction and
+  ship an OFF code with it.
+- Next step: use the confirmed current-HP address as the watchpoint target to
+  find the code that writes HP. This is the first cheat that needs disassembly.
+
+## Max Stats
+
+- Stage: not started
+- Targets: attack, defence, and any other numeric stats on the status screen
+- Notes: check three things for every stat.
+  1. Overflow. A signed 16-bit field set to 65535 reads as -1 and makes the
+     player weaker. Write 9999, not the type maximum.
+  2. Recalculation. If the stat is derived from level or equipment, the write
+     is replaced and the source must be targeted instead.
+  3. Formula breakage. A very large attack value can overflow the damage
+     calculation and heal the enemy instead of hurting it.
+- Verification: hit an enemy and confirm the damage number rose.
+- Next step: user opens the status screen so I can read every stat from a
+  screenshot, then search them one at a time.
 
 ## Walk/Run Speed x2
 
 - Stage: not started
 - Notes: movement speed is usually a float, either stored near the player
-  struct or as a constant in code. Try the stored value first. Doubling may
-  break collision or animation, so test small increases first.
-- Next step: after HP.
+  structure or as a constant in code. Try the stored value first. Doubling can
+  break collision or animation, so test smaller increases first.
+- Next step: after the HP work.
 
 ## EXP x2, x4, x8, x16
 
@@ -81,7 +125,8 @@ relaunch.
 - Notes: these four are the same instruction patch with a different left shift,
   so finding the site once yields all four. The target is the amount added per
   kill, not a stored total, so a value write cannot do this.
-- Next step: find the EXP total first, then find the code that writes to it.
+- Next step: find the EXP total first, then use a watchpoint to find the code
+  that writes to it.
 
 ## EXP x100
 
@@ -99,11 +144,20 @@ relaunch.
 - Next step: last. By then the disassembly done for the EXP patch will have
   mapped enough of the code to judge whether a timing value exists.
 
+## Infinite AP (candidate)
+
+- Stage: not started
+- Notes: not yet agreed with the user. The status bar shows `AP 084` beside HP,
+  so AP is a spendable resource, but its purpose is unconfirmed. If it limits
+  actions per turn or per floor, locking it uses the same technique as
+  Infinite HP and costs almost nothing once HP is done.
+- Next step: confirm what AP does, then ask whether to include it.
+
 ## Open questions for this game
 
 - Which engine is it? If it is Unity with IL2CPP, method names may be
   recoverable, which would make the EXP function findable by name instead of by
-  search. Check by looking for `il2cpp` or `UnityEngine` strings in the main
-  module once the game is running.
+  search. Check for `il2cpp` and `UnityEngine` strings in the main module once
+  the game is running.
 - Main module size is 66.7 MiB, which is large for static analysis without
   symbols.

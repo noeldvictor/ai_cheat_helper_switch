@@ -68,12 +68,19 @@ Cheat kinds the system should support (all chosen by the user):
 Specific cheats requested on 2026-09-13, in the agreed order of work:
 
 1. Max money
-2. Max attack
-3. God mode
-4. Double walk and run speed
-5. EXP multipliers at x2, x4, x8, x16
-6. EXP multiplier at x100
-7. Fast forward, if the game has a speed or delta-time value to change
+2. Max HP (raise the ceiling)
+3. Full heal (one write of current HP to maximum)
+4. Infinite HP (lock current HP each frame)
+5. Max stats, such as attack and defence
+6. God mode (damage never subtracted; needs a code patch)
+7. Double walk and run speed
+8. EXP multipliers at x2, x4, x8, x16
+9. EXP multiplier at x100
+10. Fast forward, if the game has a speed or delta-time value to change
+
+The user asked on 2026-09-13 for the health and stat cheats to be described
+precisely rather than lumped together as "god mode". Keep them as separate
+entries with separate promises.
 
 The per-game breakdown, with the technique and difficulty for each, is in the
 game card. Work on one falsifiable target at a time. Money is first because it

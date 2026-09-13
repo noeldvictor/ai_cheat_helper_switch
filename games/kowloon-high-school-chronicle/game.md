@@ -37,21 +37,37 @@ this exact Build ID.
 
 | # | Effect | Technique | Difficulty |
 |---|---|---|---|
-| 1 | Max money | write a value, then lock it | easy |
-| 2 | Max attack | write a value | easy to medium |
-| 3 | God mode | lock HP first, then patch the damage instruction | medium |
-| 4 | Double walk and run speed | edit the speed value, likely a float | medium |
-| 5 | EXP x2, x4, x8, x16 | patch the EXP-add instruction with a left shift | hard |
-| 6 | EXP x100 | same patch site, using a multiply instruction | hard |
-| 7 | Fast forward | unknown; see the note below | unknown |
+| 1 | Max money | write the value | easy |
+| 2 | Max HP | write the maximum-HP field | easy |
+| 3 | Infinite HP | lock current HP to its maximum each frame | easy |
+| 4 | Max stats (attack, defence, others) | write each stat field | easy to medium |
+| 5 | God mode | patch the instruction that subtracts damage | medium to hard |
+| 6 | Double walk and run speed | edit the speed value, likely a float | medium |
+| 7 | EXP x2, x4, x8, x16 | patch the EXP-add instruction with a left shift | hard |
+| 8 | EXP x100 | same patch site, using a multiply instruction | hard |
+| 9 | Fast forward | unknown; see the note below | unknown |
+
+Candidate, not yet agreed: infinite AP. The status bar shows `AP 084` next to
+HP, so AP is a spendable resource, but what it does is not yet confirmed. If it
+limits actions, locking it is the same technique as infinite HP.
 
 Notes on the harder items:
 
-- **God mode.** Locking current HP to its maximum is quick and usually enough.
-  It is not true invulnerability, because the game still applies damage and the
-  lock overwrites it a moment later. Effects that kill outright or bypass HP can
-  still work. The stronger version replaces the instruction that subtracts
-  damage, which requires finding that instruction first.
+- **The HP family is four separate cheats**, and they promise different things.
+  *Max HP* raises the ceiling only, so the player sits at 100/9999 until healed.
+  *Full heal* sets current HP to maximum once, and is the quickest test that the
+  current-HP address is right. *Infinite HP* rewrites current HP every frame;
+  the game still applies damage first, so the bar may dip, and nothing protects
+  against deaths that bypass HP. *God mode* patches the code so damage is never
+  subtracted and the bar never moves. Build them in that order, because the HP
+  lock is what lets us find the code that writes HP, which is what god mode
+  needs. The starting values are known from a screenshot: HP 100/100 at level 1.
+- **Max stats.** Check three things on every stat. Overflow: a signed 16-bit
+  field set to 65535 reads as -1 and makes the player weaker, so write 9999 and
+  not the type maximum. Recalculation: if the stat is derived from level or
+  equipment, the write is replaced and the source has to be targeted instead.
+  Formula breakage: a very large attack value can overflow the damage
+  calculation and heal the enemy instead of hurting it.
 - **EXP multipliers.** These cannot be done by writing a value, because the
   target is the amount added per kill, not a stored total. The clean method is
   an instruction patch at the point where EXP is added. Powers of two are a

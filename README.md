@@ -30,17 +30,26 @@ In this order, for the active game. The game card holds the technique and
 difficulty for each, and the research log holds the evidence.
 
 1. Max money
-2. Max attack
-3. God mode
-4. Double walk and run speed
-5. EXP multipliers at x2, x4, x8 and x16
-6. EXP multiplier at x100
-7. Fast forward, if the game has a speed value that can be changed
+2. Max HP, which raises the ceiling only
+3. Full heal, a single write of current HP up to the maximum
+4. Infinite HP, which holds current HP up every frame
+5. Max stats, such as attack and defence
+6. God mode, which stops damage being subtracted at all
+7. Double walk and run speed
+8. EXP multipliers at x2, x4, x8 and x16
+9. EXP multiplier at x100
+10. Fast forward, if the game has a speed value that can be changed
 
-The first four are value edits and locks. The EXP multipliers need the
-instruction that adds EXP to be found and patched, because the target is the
-amount added per kill rather than a stored total. Fast forward depends on the
-game keeping a delta-time or frame-limit value, which is not yet known.
+Items 2 to 6 are four different promises and are kept separate on purpose. Max
+HP only raises the ceiling, so the player stays at 100/9999 until healed.
+Infinite HP rewrites current HP after the game has already applied damage, so
+the bar can dip and nothing stops deaths that bypass HP. God mode changes the
+code so damage is never applied, and the bar never moves.
+
+The EXP multipliers need the instruction that adds EXP to be found and patched,
+because the target is the amount added per kill rather than a stored total.
+Fast forward depends on the game keeping a delta-time or frame-limit value,
+which is not yet known.
 
 ## Scope
 

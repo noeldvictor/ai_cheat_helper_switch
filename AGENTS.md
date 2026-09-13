@@ -263,13 +263,46 @@ the user to deploy it.
 
 Match the effect to the smallest technique that achieves it.
 
-- **A number the player sees** (money, stats, item counts). Search for the
-  value, then write it. Lock it only if the game recalculates it.
-- **A value that must not drop** (god mode by HP lock). Write the maximum every
-  frame with the cheat VM. The game still applies damage, so this is not true
-  invulnerability and will not stop effects that bypass HP.
+- **A number the player sees** (money, item counts). Search for the value, then
+  write it. Lock it only if the game recalculates it.
+
+The health and stat family is four separate cheats. Do not merge them, and do
+not describe one as another. Each makes a different promise to the player.
+
+- **Max HP** raises the maximum. Write the maximum-HP field. Current HP does not
+  change, so the player sits at something like 100/9999 until healed. If the
+  game derives maximum HP from level or equipment, the write is overwritten on
+  the next recalculation and the cheat needs a lock or a different target.
+- **Full heal** sets current HP equal to maximum, once. A single write, not a
+  lock. Useful as a test that the current-HP address is correct.
+- **Infinite HP** holds current HP at a chosen value every frame. The game still
+  applies damage; the lock overwrites it a moment later, so the bar may visibly
+  dip. It does not prevent death from anything that bypasses the HP value, such
+  as instant-death effects, scripted deaths, drowning, or falling, and it can
+  fail if the game checks for death between its own write and ours.
+- **God mode** changes the code so damage is never subtracted. The bar does not
+  move at all. It is stronger than a lock because nothing ever reads a reduced
+  value. It still does not cover damage that takes a different code path, or
+  deaths that never touch HP. Requires finding the instruction, so build the
+  HP lock first and use it to locate the code that writes HP.
+
+State which guarantee a cheat provides: "takes no damage" and "cannot die" are
+different claims, and only testing tells you which one you have.
+
+- **Max stats** (attack, defence, and similar). Write each field. Three failure
+  modes to check every time. First, overflow: a stat held in a signed 16-bit
+  field set to 65535 reads as -1 and makes the player weaker, so choose a large
+  safe value such as 9999 rather than the maximum the type allows. Second,
+  recalculation: many games derive the displayed stat from level and equipment,
+  so the written value is replaced and the source must be targeted instead.
+  Third, formula breakage: a very large attack value can overflow the damage
+  calculation and produce negative damage, which heals the enemy.
 - **True invulnerability**. Find the instruction that subtracts damage and
   patch it. Record the original instruction and provide an OFF code.
+
+A changed number on screen is never proof. Verify by playing: for HP, take a
+hit and confirm survival; for attack, hit an enemy and confirm the damage
+number rose.
 - **A multiplier on something gained** (EXP, money per kill). This cannot be
   done by writing a value, because the target is the amount added, not a stored
   total. Patch the instruction at the point of the addition. Powers of two are a
