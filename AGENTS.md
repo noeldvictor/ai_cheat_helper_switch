@@ -37,6 +37,47 @@ current primary project documentation. Prefer, in order:
 Record the URL, release/tag, and verification date in `docs/sources.md` when a
 version-sensitive decision affects the project.
 
+## Mistakes already made
+
+Every item here cost real time on 2026-09-13. Read this before any memory work.
+Where a rule is enforced by code, the enforcement is named; do not work around
+it.
+
+1. **A bare connection to the Homebrew Menu netloader kills it.** It accepts one
+   connection and expects the transfer to begin at once. A poll that connects
+   and hangs up consumed that connection, the console showed "Error getting name
+   length: err=11", and the transfer failed. Never probe port 28280. Let the
+   transfer tool do its own waiting and retrying.
+2. **A poke returns no reply.** Waiting for one blocks until the socket times
+   out, and by then the write has landed with no cleanup armed, leaving an
+   experimental value in the game. Enforced by `SysBotBase._send`, which refuses
+   any command that does reply, and by a test asserting no read is attempted.
+3. **Search width and alignment decide what is visible.** A scan for a 4-byte
+   value steps 4 bytes, so a 2-byte field on a 2-byte boundary is invisible to
+   it. A whole session was wasted this way on reserve ammo. When a narrowed set
+   collapses to zero, suspect the width before the address. Enforced by
+   `scan.refine`, which raises `CandidateCollapse` and leaves the session
+   intact, and by `scan.start_exact_all_widths`, which opens one session per
+   usable width so a wrong guess costs nothing.
+4. **Check how common a value is before searching it.** Small numbers such as a
+   level of 1 or a two-digit stat match hundreds of thousands of addresses and
+   hit the device cap, which truncates the set and can exclude the real address.
+   Use `scan.probe_widths` first, or `switchlab scan probe --value N`.
+5. **Opening a cheat overlay blocks the bridge.** Ultrahand, EdiZon-SE or Breeze
+   attach Atmosphère's cheat manager to the game, and every read then fails with
+   kernel `0xF401` until the game is fully closed. Identity reads keep working,
+   which makes it look like a different fault. Run `switchlab diagnose` first.
+6. **`getHeapBase` can point at unmapped memory.** For this game the kernel heap
+   region was empty and the data lived elsewhere. Ask the kernel for the region
+   list instead of assuming.
+7. **Mapped regions contain holes.** A straight read of an 18 MiB block stopped
+   at 11.4 MiB. Use the hole-tolerant reader.
+8. **A changed number on screen is not proof of a gameplay effect.** Test the
+   behaviour: take a hit, fire the weapon, hit an enemy.
+9. **A heap address belongs to one launch.** Never put one in a cheat file.
+   Promote only a pointer chain, module-relative address, or patch that has
+   survived a full relaunch.
+
 ## Bridge and session rules (learned 2026-09-13)
 
 The PC reads the game through `sys-botbase-lab`, this repository's fork of

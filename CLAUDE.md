@@ -56,11 +56,17 @@ PYTHONPATH=tools .venv/bin/python -m switchlab files ls /atmosphere/contents
 PYTHONPATH=tools .venv/bin/python -m pytest tools/tests -q
 ```
 
-Before searching a value, check how common it is. Small numbers such as 1 or a
-two-digit stat match hundreds of thousands of addresses and hit the candidate
-cap, which truncates the set and can exclude the real address. Prefer a larger
-or more distinctive value, or reach the field through a structure whose address
-is already known.
+Read the "Mistakes already made" section of `AGENTS.md` before any memory work.
+The four that bite most often:
+
+- Probe a value across widths before searching it (`scan probe --value N`), and
+  prefer `scan new` without `--width`, which opens one session per usable width.
+  A 4-byte scan cannot see a 2-byte field on a 2-byte boundary.
+- If a narrowed set collapses to zero, the width is wrong, not the address. The
+  tool raises `CandidateCollapse` and keeps the session; do not pass
+  `allow_empty` to silence it.
+- A poke returns no reply. Never wait for one.
+- Never connect to the netloader port to test whether it is open.
 
 The `scan` and `files` commands need the `sys-botbase-lab` build on the
 Switch, which reports a version ending in `-lab`. With the upstream build,

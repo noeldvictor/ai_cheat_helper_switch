@@ -44,7 +44,7 @@ known field, then read the neighbouring values.
 | Max Stats | not started | none | open the status screen and read each stat |
 | God Mode (damage patch) | not started | none | needs the current-HP address first |
 | Infinite Ammo (magazine) | confirmed | heap, this launch only | find a stable form across a relaunch |
-| Max Reserve Ammo | searching | none | session `reserve-u16`, 86568 candidates; needs another reload |
+| Max Reserve Ammo | candidates | 5 addresses, heap | one more reload separates them |
 | Walk/Run Speed x2 | not started | none | look for a float near the player structure |
 | EXP x2, x4, x8, x16 | not started | none | needs the EXP-add instruction |
 | EXP x100 | not started | none | same patch site, multiply instead of shift |
@@ -181,8 +181,14 @@ of work as god mode.
 - Window search: 39 u16 matches for 120 within 256 KiB of the magazine field,
   and only 2 as u32, both far away. Too many to pick out without another
   change.
-- Next step: user fires and reloads again so the reserve drops below 120, then
-  narrow `reserve-u16` by the new exact value.
+- Progress: a second reload took the reserve from 120 to 90 and narrowed the
+  u16 session from 86568 candidates to 5:
+  `0x555A6627CC`, `0x555A6627D2`, `0x556023434A`, `0x557A988114`,
+  `0x557B75AF52`. The first two are 6 bytes apart and so are probably fields in
+  one structure, which may be the weapon or inventory record.
+- Next step: one more reload takes the reserve to 60 and should leave one or
+  two. Then confirm with a guarded write and a screenshot, as the magazine was
+  confirmed.
 
 ## Walk/Run Speed x2
 

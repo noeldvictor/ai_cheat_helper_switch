@@ -25,11 +25,25 @@ Keep every experiment reversible:
 
 ## PC bridge track (this repository's default)
 
-The physical Switch runs sys-botbase; the PC runs `tools/switchlab`. Read
-`references/hardware-edizon.md` section "PC bridge with sys-botbase" before
-touching memory. Order of operations: full game relaunch with no overlay,
-`status`, `diagnose` (must report "can attach"), `regions`, screenshot to
-read the visible value, snapshot, scan, candidate-only rescans.
+The physical Switch runs `sys-botbase-lab`, a fork kept in the repository; the
+PC runs `tools/switchlab`. Read `references/hardware-edizon.md` section "PC
+bridge with sys-botbase" before touching memory. Order of operations: full game
+relaunch with no overlay, `status`, `diagnose` (must report "can attach"),
+`regions`, screenshot to read the visible value, probe the value across widths,
+open a session per usable width, then narrow after each in-game change.
+
+Rules paid for in lost time, expanded in the host repository's `AGENTS.md`:
+
+- Probe a value across widths before searching. A 4-byte scan steps 4 bytes and
+  cannot see a 2-byte field on a 2-byte boundary.
+- A candidate set that collapses to zero means the width was wrong, not that the
+  address moved. Keep the session and re-probe.
+- Small values such as a level of 1 exceed the device candidate cap, which
+  truncates the set and can exclude the real address.
+- A poke returns no reply. Waiting for one times out after the write has already
+  landed, leaving an experimental value in the game with no cleanup armed.
+- Never open a bare connection to the Homebrew Menu netloader port to test it.
+  It accepts one connection and expects the transfer immediately.
 
 ## Route the session
 

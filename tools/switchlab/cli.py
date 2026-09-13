@@ -9,7 +9,8 @@ import sys
 from switchlab.bridge.sysbotbase import BridgeError, SysBotBase, decode_result
 from switchlab.identity import read_identity
 from switchlab.regions import discover_regions, discover_regions_auto, scan_regions, scan_regions_kernel
-from switchlab.scan import OPS, ScanSession, read_values, refine, start_exact
+from switchlab.scan import (OPS, CandidateCollapse, ScanSession, probe_widths, read_values,
+                            refine, start_exact, start_exact_all_widths)
 from switchlab.screen import capture_screenshot
 
 
@@ -73,11 +74,22 @@ def cmd_scan(args: argparse.Namespace) -> int:
         ident = read_identity(client)
         if ident is None:
             raise BridgeError("no game is running")
+        if args.scan_cmd == "probe":
+            _require_lab(client)
+            pairs = [(r.start, r.size) for r in scan_regions_kernel(discover_regions_auto(client, log=lambda *_: None))]
+            print(f"counting matches for {args.value} across {sum(n for _, n in pairs) / 1024**2:.0f} MiB:")
+            probe_widths(client, pairs, args.value, log=print)
+            return 0
         if args.scan_cmd == "new":
             _require_lab(client)
             regions = scan_regions_kernel(discover_regions_auto(client, log=lambda *_: None))
             pairs = [(r.start, r.size) for r in regions]
             print(f"searching {sum(n for _, n in pairs) / 1024**2:.0f} MiB in {len(pairs)} regions on the Switch...")
+            if args.width is None:
+                sessions = start_exact_all_widths(client, pairs, args.value, args.label, ident.build_id, log=print)
+                print(f"opened {len(sessions)} sessions: " + ", ".join(f"{args.label}-u{w*8}" for w in sessions))
+                print("narrow every one of them; the wrong widths collapse and the right one survives")
+                return 0
             session = start_exact(client, pairs, args.width, args.value, args.label, ident.build_id, log=print)
         elif args.scan_cmd == "next":
             session = ScanSession.load(ident.build_id, args.label)
@@ -173,9 +185,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("scan", help="candidate narrowing sessions (lab build)")
     ss = s.add_subparsers(dest="scan_cmd", required=True)
+    b = ss.add_parser("probe", help="count matches per width before starting a session")
+    b.add_argument("--value", type=int, required=True)
     n = ss.add_parser("new", help="on-device exact search into a new session")
     n.add_argument("--label", required=True)
-    n.add_argument("--width", type=int, choices=[1, 2, 4, 8], default=4)
+    n.add_argument("--width", type=int, choices=[1, 2, 4, 8], default=None,
+                   help="omit to open one session per usable width, which is the safe default")
     n.add_argument("--value", type=int, required=True)
     x = ss.add_parser("next", help="narrow an existing session by re-reading candidates")
     x.add_argument("--label", required=True)
@@ -214,6 +229,9 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         return args.func(args)
+    except CandidateCollapse as exc:
+        print(f"search collapsed: {exc}", file=sys.stderr)
+        return 3
     except BridgeError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

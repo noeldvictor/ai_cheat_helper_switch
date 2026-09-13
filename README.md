@@ -91,7 +91,13 @@ state of each cheat and is updated in place as work happens, so you can see at
 a glance which cheats are searching, confirmed, encoded, or verified.
 `research-log.md` is the append-only record of what was tried and observed.
 
-The full design, trade-offs, and lessons learned are in `docs/design.md`.
+The full design, trade-offs, and lessons learned are in `docs/design.md`. The
+mistakes that have already cost time, and the rules that came out of them, are
+listed at the top of `AGENTS.md` under "Mistakes already made". Several are
+enforced by the tools rather than left to memory: a search that eliminates every
+candidate refuses to destroy the session and tells you the width is probably
+wrong, a new search opens one session per usable width by default, and the
+client will not wait for a reply to a command that does not send one.
 
 ## Cheat files
 

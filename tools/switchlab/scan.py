@@ -21,6 +21,38 @@ SESSION_DIR = REPO_ROOT / "local" / "sessions"
 
 OPS = ("exact", "changed", "unchanged", "increased", "decreased")
 
+# A session with more candidates than this is workable but slow to narrow over
+# the network, so prefer a width that gives fewer.
+COMFORTABLE_CANDIDATES = 100_000
+
+
+class CandidateCollapse(RuntimeError):
+    """Every candidate was eliminated. Usually the search width was wrong."""
+
+
+@dataclass(frozen=True)
+class WidthProbe:
+    width: int
+    hits: int
+    capped: bool
+    incomplete: bool
+
+    @property
+    def usable(self) -> bool:
+        return self.hits > 0 and not self.capped
+
+    def describe(self) -> str:
+        if self.capped:
+            note = "CAPPED, too common to search directly"
+        elif self.hits == 0:
+            note = "no matches"
+        elif self.hits > COMFORTABLE_CANDIDATES:
+            note = "usable but slow to narrow"
+        else:
+            note = "usable"
+        return f"u{self.width * 8:<2} {self.hits:>7} hits  {note}"
+
+
 
 @dataclass
 class ScanSession:
@@ -108,7 +140,8 @@ def start_exact(client, regions, width: int, value: int, label: str, build_id: s
     return session
 
 
-def refine(client, session: ScanSession, op: str, value: Optional[int] = None, log=None) -> ScanSession:
+def refine(client, session: ScanSession, op: str, value: Optional[int] = None, log=None,
+           allow_empty: bool = False) -> ScanSession:
     """Keep candidates whose current value satisfies `op` (see OPS)."""
     if op not in OPS:
         raise ValueError(f"op must be one of {OPS}")
@@ -130,6 +163,18 @@ def refine(client, session: ScanSession, op: str, value: Optional[int] = None, l
         }[op]()
         if ok:
             keep.append(a)
+    if before and not keep and not allow_empty:
+        # Do not destroy the session. An empty result almost always means the
+        # search width was wrong, not that the address vanished: a scan for a
+        # 4-byte value steps 4 bytes and cannot see a 2-byte field on a
+        # 2-byte boundary. This cost a whole session once already.
+        raise CandidateCollapse(
+            f"every one of {before} candidates was eliminated by {op}"
+            f"{'' if value is None else ' ' + str(value)}. The session is unchanged. "
+            "Suspect the width before the address: probe the current value at the other "
+            "widths with probe_widths() and start a fresh session on a usable one. "
+            "Pass allow_empty=True only if you are certain the field really is gone."
+        )
     session.candidates = keep
     session.values = {a: current[a] for a in keep}
     session.note(op, value, before)
@@ -137,3 +182,46 @@ def refine(client, session: ScanSession, op: str, value: Optional[int] = None, l
     if log:
         log(f"{before} -> {len(keep)} candidates after {op}{'' if value is None else ' ' + str(value)}")
     return session
+
+
+def probe_widths(client, regions, value: int, widths=(4, 2, 1, 8), log=None) -> List[WidthProbe]:
+    """Count matches for `value` at each width before committing to a session.
+
+    Always run this before a first search. A value that matches too many
+    addresses hits the device cap, which truncates the set and can exclude the
+    real address, and a value searched at the wrong width finds nothing useful
+    at all.
+    """
+    out: List[WidthProbe] = []
+    for w in widths:
+        if value >= (1 << (8 * w)):
+            continue
+        addrs, incomplete, capped = client.search(w, value, regions)
+        probe = WidthProbe(w, len(addrs), capped, incomplete)
+        out.append(probe)
+        if log:
+            log("  " + probe.describe())
+    return out
+
+
+def start_exact_all_widths(client, regions, value: int, label: str, build_id: str,
+                           widths=(4, 2), log=None) -> Dict[int, ScanSession]:
+    """Open one session per usable width, so a wrong width guess costs nothing.
+
+    Sessions are labelled `<label>-u32`, `<label>-u16` and so on. Narrow every
+    one of them on the next change; the wrong widths collapse and the right one
+    survives.
+    """
+    sessions: Dict[int, ScanSession] = {}
+    for probe in probe_widths(client, regions, value, widths=widths, log=log):
+        if not probe.usable:
+            continue
+        name = f"{label}-u{probe.width * 8}"
+        sessions[probe.width] = start_exact(client, regions, probe.width, value, name, build_id, log=log)
+    if not sessions:
+        raise CandidateCollapse(
+            f"no width gave a usable candidate set for {value}. It is either absent or too "
+            "common. Pick a larger or rarer value, or reach the field through a structure "
+            "whose address is already known."
+        )
+    return sessions

@@ -68,3 +68,85 @@ def test_session_roundtrip():
     s.save()
     back = ScanSession.load("BID", "hp")
     assert back.candidates == [0x10, 0x20] and back.values == {0x10: 5, 0x20: 6} and back.width == 2
+
+
+class WidthAwareLab:
+    """Search results differ per width, like the real device."""
+
+    def __init__(self, by_width, capped_widths=()):
+        self.by_width = by_width          # {width: [addresses]}
+        self.capped = set(capped_widths)
+        self.mem = {}
+
+    def search(self, width, value, regions):
+        return list(self.by_width.get(width, [])), False, width in self.capped
+
+    def peek_multi(self, pairs):
+        return b""
+
+    def peek_absolute(self, a, n):
+        from switchlab.bridge.sysbotbase import BridgeError
+
+        if a not in self.mem:
+            raise BridgeError("unmapped")
+        return self.mem[a].to_bytes(n, "little")
+
+
+def test_probe_widths_reports_capped_and_usable():
+    from switchlab.scan import probe_widths
+
+    c = WidthAwareLab({4: [1, 2, 3], 2: list(range(10)), 1: []}, capped_widths=(1,))
+    probes = {p.width: p for p in probe_widths(c, [(0, 16)], 90)}
+    assert probes[4].usable and probes[4].hits == 3
+    assert probes[2].usable and probes[2].hits == 10
+    assert probes[1].capped and not probes[1].usable
+    assert "CAPPED" in probes[1].describe()
+
+
+def test_probe_skips_widths_too_small_for_the_value():
+    from switchlab.scan import probe_widths
+
+    c = WidthAwareLab({2: [1], 4: [1]})
+    widths = [p.width for p in probe_widths(c, [(0, 16)], 300)]
+    assert 1 not in widths  # 300 does not fit in one byte
+
+
+def test_start_exact_all_widths_opens_one_session_per_usable_width():
+    from switchlab.scan import ScanSession, start_exact_all_widths
+
+    c = WidthAwareLab({4: [0x10], 2: [0x20, 0x22]}, capped_widths=())
+    sessions = start_exact_all_widths(c, [(0, 16)], 90, "reserve", "BID")
+    assert set(sessions) == {4, 2}
+    assert ScanSession.load("BID", "reserve-u32").candidates == [0x10]
+    assert ScanSession.load("BID", "reserve-u16").candidates == [0x20, 0x22]
+
+
+def test_all_widths_raises_when_nothing_is_usable():
+    from switchlab.scan import CandidateCollapse, start_exact_all_widths
+
+    c = WidthAwareLab({4: [], 2: []})
+    with pytest.raises(CandidateCollapse):
+        start_exact_all_widths(c, [(0, 16)], 90, "nope", "BID")
+
+
+def test_refine_to_zero_raises_and_leaves_the_session_intact():
+    from switchlab.scan import CandidateCollapse, refine, start_exact
+
+    client = FakeLab({0x1000: 150, 0x2000: 150})
+    s = start_exact(client, [(0x1000, 0x2000)], 4, 150, "reserve", "BID")
+    assert len(s.candidates) == 2
+    client.mem = {0x1000: 7, 0x2000: 7}      # the real field was never here
+    with pytest.raises(CandidateCollapse) as err:
+        refine(client, s, "exact", 120)
+    assert "width" in str(err.value)
+    assert len(s.candidates) == 2            # session preserved, not destroyed
+
+
+def test_refine_to_zero_is_allowed_when_asked_explicitly():
+    from switchlab.scan import refine, start_exact
+
+    client = FakeLab({0x1000: 150})
+    s = start_exact(client, [(0x1000, 0x2000)], 4, 150, "r2", "BID")
+    client.mem = {0x1000: 7}
+    refine(client, s, "exact", 120, allow_empty=True)
+    assert s.candidates == []

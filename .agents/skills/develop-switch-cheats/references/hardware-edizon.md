@@ -75,9 +75,20 @@ Verified 2026-09-13 on Atmosphère 1.11 / firmware 22.1 with sys-botbase v2.5.
 - `getHeapBase` may point at an unmapped kernel heap region. Use
   `switchlab regions` (pointer harvesting from the main module, two levels)
   to find the real data blocks, then snapshot with the hole-tolerant reader.
-- Expect about 0.7 MB/s. Snapshot once, then rescan candidates only.
+- Expect about 0.7 MB/s over hex on the upstream build, and about 5 MB/s on a
+  build that sends binary. Prefer an on-device search over pulling memory to the
+  PC at all.
 - `peekMulti` aborts on the first unreadable address; use it only on known
   candidates.
+- A poke prints nothing. Do not wait for a reply: the socket blocks until it
+  times out, and the write has already landed with no cleanup armed.
+- Search width and alignment decide what a scan can see. A 4-byte search steps
+  4 bytes and misses a 2-byte field on a 2-byte boundary. Probe a value at every
+  plausible width before committing, and treat a candidate set that collapses to
+  zero as a wrong width rather than a moved address.
+- Values that are small or common exceed any candidate cap, which silently
+  truncates the set. Measure the match count first and pick a rarer value, or
+  reach the field from a structure whose address is already known.
 - To test a finished cheat file, the file must be on the card at launch, which
   attaches the cheat manager. Research and cheat testing therefore happen in
   separate launches of the game.
