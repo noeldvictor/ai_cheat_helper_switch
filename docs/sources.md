@@ -102,8 +102,16 @@ immediately before installing or updating software.
 - Consequence: it cannot read the game while Atmosphère's cheat manager holds
   the debug session (see the Atmosphère entry below). No memory-region
   enumeration command exists.
-- Release notes do not state Atmosphère or firmware requirements; recheck
-  against the user's versions before installing.
+- Release notes do not state Atmosphère or firmware requirements.
+- Compatibility check for the user's firmware 22.1 / Atmosphère 1.11
+  (2026-09-13): unconfirmed by the maintainer. Open issues #105, #106, #107
+  ask for firmware 22 support with no maintainer reply; #105 was traced to
+  an outdated Hekate/Nyx, not to sys-botbase. `v2.5` was built 2026-05-24,
+  after firmware 22.0.0 shipped, and its ten commits since `v2.41` are
+  error-handling fixes only. One unreleased commit (2026-06-02, "Missed a
+  metadata check") sits on master. Program ID `430000000000000B`; ships a
+  `toolbox.json` and needs a reboot. Install is reversible by deleting
+  `atmosphere/contents/430000000000000B` from the card.
 
 ### Atmosphère cheat manager attach rules
 
