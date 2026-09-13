@@ -1,6 +1,9 @@
 # Legend of Mana — Game Card
 
-Status: confirmed first game (user decision 2026-09-13, after briefly choosing Torneko)
+Status: deferred; crashed at launch on 2026-09-13 with sys-botbase installed.
+Cause unknown. Before retrying, capture the crash type (Atmosphère fatal
+screen with error code, or the system's "software was closed" dialog) and
+check whether a cheats folder exists for its Build ID on the card.
 
 ## Baseline
 

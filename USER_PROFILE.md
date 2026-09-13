@@ -42,13 +42,12 @@ PC side:
 
 ## First game
 
-- Name: Legend of Mana (Nintendo Switch), confirmed by the user 2026-09-13
-  after briefly choosing Torneko.
-- Game version: unknown.
-- Title ID: unknown.
-- Build ID: unknown.
-- Dragon Quest Heroes: Torneko's Mystery Dungeon -Classic HD- (Switch 1
-  version, owned) is deferred as the second game.
+- Name: Kowloon High-School Chronicle (Nintendo Switch), chosen 2026-09-13.
+- Display version 1.0.0, Title ID 0100FF70134BA000, Build ID
+  6547E06ECC5E8F4B, all read from the running game through the bridge.
+- Legend of Mana: deferred; it crashed at launch on 2026-09-13 (cause not yet
+  investigated; details in its game card).
+- Dragon Quest Heroes: Torneko's Mystery Dungeon -Classic HD-: deferred.
 
 Do not copy a Title ID or Build ID from a website and assume it matches the
 installed game. Read both from the user's running copy or installed tool.
@@ -66,8 +65,8 @@ Cheat kinds the system should support (all chosen by the user):
    instruction patches for the exact Build ID.
 4. Item and inventory edits.
 
-The first target is Lucre (money) in Legend of Mana: a visible integer that
-changes naturally. Work on one falsifiable target at a time.
+The first target will be a visible integer in Kowloon High-School Chronicle
+that changes naturally. Work on one falsifiable target at a time.
 
 ## Assistance preference
 
@@ -94,5 +93,5 @@ changes naturally. Work on one falsifiable target at a time.
 2. Whether an FTP server (sys-ftpd, ftpd) is installed on the Switch.
 3. Done 2026-09-13: research bridge is sys-botbase v2.5, installed and answering.
 4. The Switch's local IP address, shared in chat only, when a session starts.
-5. Later: game version, Title ID, and Build ID read from the running game
-   (Legend of Mana).
+5. Done 2026-09-13 for Kowloon High-School Chronicle: version, Title ID, and
+   Build ID read from the running game.
