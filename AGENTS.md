@@ -74,7 +74,13 @@ it.
    at 11.4 MiB. Use the hole-tolerant reader.
 8. **A changed number on screen is not proof of a gameplay effect.** Test the
    behaviour: take a hit, fire the weapon, hit an enemy.
-9. **Never write to a candidate to find out what it is.** Two reserve ammo
+9. **Record findings while the game is still running.** Every address from the
+   first session was lost when the process died, because the searches lived in
+   git-ignored session files and the details only existed in conversation. A
+   finding record with the search recipe and a byte signature would have made
+   recovery a few seconds of work. Capture as soon as a candidate is
+   interesting; see the section above.
+10. **Never write to a candidate to find out what it is.** Two reserve ammo
    candidates were left after narrowing, and instead of asking for one more
    in-game change I wrote test values into both to see which one responded.
    The game crashed minutes later, every heap address found that session died
@@ -82,9 +88,41 @@ it.
    narrowing has already isolated. Enforced by `guard.write_from_session`,
    which refuses while more than one candidate remains. The cost of one more
    reload is seconds; the cost of a crash is the whole session.
-10. **A heap address belongs to one launch.** Never put one in a cheat file.
+11. **A heap address belongs to one launch.** Never put one in a cheat file.
    Promote only a pointer chain, module-relative address, or patch that has
    survived a full relaunch.
+12. **Match the write width to the field width.** Writing 77 as a 4-byte value
+   into a 2-byte field also set the neighbouring field from 30 to 0. That
+   collateral write was never intended and is the most likely trigger of the
+   crash. Write through `guard.write_from_session`, which uses the width the
+   search established.
+
+## Save every finding to the repository as you go
+
+A heap address dies with the game process. Losing one to a crash used to mean
+repeating the whole search. What survives a crash is everything around the
+address, so record that the moment a candidate becomes interesting, not at the
+end of the session.
+
+Findings live in `games/<game-slug>/findings/<label>.json` and are committed.
+Each one holds the address, the width, the value at capture, the memory region
+and the offset within it, the main module base for that launch, a window of
+bytes around the field, the exact search recipe that produced it, and a status.
+
+- Capture as soon as a session narrows to a handful of candidates, and again
+  when one is confirmed. Do not wait.
+- `switchlab findings capture <game> --label X --address 0x... --width N`
+  writes the record. `--recipe` is repeatable and should say how it was found,
+  step by step, so the search can be reproduced from nothing.
+- After a relaunch or a crash, `switchlab findings relocate <game> --label X
+  --value N` searches for the field's current on-screen value and ranks the
+  candidates by how well the surrounding bytes match the stored window. This
+  turns a lost address into a few seconds of work.
+- The byte window is research evidence about the running state of the user's
+  own save. Keep it small, around 64 bytes each side. Never commit a region
+  dump, a save file, or anything larger.
+- Record the status honestly: `candidate`, `confirmed`, `unresolved`,
+  `rejected`. A finding whose process has died keeps its evidence and says so.
 
 ## Bridge and session rules (learned 2026-09-13)
 

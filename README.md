@@ -109,6 +109,8 @@ games/<game-slug>/cheats/<BUILD_ID>.txt   Atmosphère cheat file, copy as-is
 games/<game-slug>/game.md                 identity, versions, requested effects
 games/<game-slug>/cheat-notes.md          state of each cheat, updated as we go
 games/<game-slug>/research-log.md         evidence for every experiment
+games/<game-slug>/findings/<label>.json   found addresses, with the recipe and
+                                          a byte signature to re-find them
 ```
 
 Each cheat file starts with a comment block naming the game, version, Title

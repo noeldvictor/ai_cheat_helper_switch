@@ -1,0 +1,24 @@
+{
+ "label": "ammo-reserve-b",
+ "game_slug": "kowloon-high-school-chronicle",
+ "build_id": "6547E06ECC5E8F4B",
+ "title_id": "0100FF70134BA000",
+ "width": 2,
+ "address": "0x555A6627D2",
+ "value": 60,
+ "region_kind": "heap",
+ "region_start": "0x5557373000",
+ "region_offset": "0x32EF7D2",
+ "main_nso_base": "0x7B3604000",
+ "sig_before": 22,
+ "sig_after": 8,
+ "signature": "0000000000B0235C550000001E001E003C001E001E003C000000600012000000",
+ "recipe": [
+  "exact u16 search for 120 after a reload: 86568 candidates",
+  "reload again to 90, narrow by exact u16 90: 5 candidates",
+  "reload again to 60, narrow by exact u16 60: 2 candidates"
+ ],
+ "status": "unresolved",
+ "notes": "One of these two is the reserve count; writes to both were rejected by the game, which rewrote the value immediately. The surrounding bytes read 30, 30, 60, 30, 30, 60, which looks like a table rather than a single live counter, so these may be copies rather than the source. Do not write here again without narrowing to one candidate first.",
+ "captured_at": "2026-09-13T15:58:00"
+}

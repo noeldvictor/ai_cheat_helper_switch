@@ -7,6 +7,7 @@ import os
 import sys
 
 from switchlab.bridge.sysbotbase import BridgeError, SysBotBase, decode_result
+from switchlab.findings import Finding, capture, relocate
 from switchlab.identity import read_identity
 from switchlab.regions import discover_regions, discover_regions_auto, scan_regions, scan_regions_kernel
 from switchlab.scan import (OPS, CandidateCollapse, ScanSession, probe_widths, read_values,
@@ -139,6 +140,36 @@ def cmd_files(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_findings(args: argparse.Namespace) -> int:
+    if args.findings_cmd == "list":
+        rows = Finding.list_all(args.game)
+        if not rows:
+            print(f"no findings recorded for {args.game}")
+            return 1
+        for f in rows:
+            print(f.describe())
+        return 0
+    with SysBotBase(_host(args), args.port, timeout=120) as client:
+        if args.findings_cmd == "capture":
+            f = capture(client, args.game, args.label, int(args.address, 0), args.width,
+                        recipe=args.recipe or [], status=args.status, notes=args.notes or "")
+            print(f"saved {f.path}")
+            print(f.describe())
+        elif args.findings_cmd == "relocate":
+            f = Finding.load(args.game, args.label)
+            pairs = [(r.start, r.size) for r in scan_regions_kernel(discover_regions_auto(client, log=lambda *_: None))]
+            ranked = relocate(client, f, args.value, pairs, log=print)
+            if not ranked:
+                print("no candidate matched the stored signature; change the value in game and retry")
+                return 1
+            for addr, score in ranked[:10]:
+                print(f"  0x{addr:X}  signature match {score:.0%}")
+            best, score = ranked[0]
+            if len(ranked) == 1 or score > ranked[1][1] + 0.1:
+                print(f"\nbest match 0x{best:X}; re-capture it to refresh the record")
+    return 0
+
+
 def cmd_screenshot(args: argparse.Namespace) -> int:
     with SysBotBase(_host(args), args.port) as client:
         path = capture_screenshot(client, label=args.label)
@@ -212,6 +243,19 @@ def build_parser() -> argparse.ArgumentParser:
     a = fs.add_parser("rm"); a.add_argument("path")
     a = fs.add_parser("mv"); a.add_argument("src"); a.add_argument("dst")
     s.set_defaults(func=cmd_files)
+
+    s = sub.add_parser("findings", help="durable records of found addresses, stored in the repo")
+    fs = s.add_subparsers(dest="findings_cmd", required=True)
+    a = fs.add_parser("list"); a.add_argument("game")
+    a = fs.add_parser("capture", help="record an address with its signature while the game runs")
+    a.add_argument("game"); a.add_argument("--label", required=True)
+    a.add_argument("--address", required=True); a.add_argument("--width", type=int, required=True)
+    a.add_argument("--status", default="candidate"); a.add_argument("--notes")
+    a.add_argument("--recipe", action="append", help="repeatable; how the address was found")
+    a = fs.add_parser("relocate", help="find a recorded address again after a relaunch")
+    a.add_argument("game"); a.add_argument("--label", required=True)
+    a.add_argument("--value", type=int, required=True, help="what the field reads on screen now")
+    s.set_defaults(func=cmd_findings)
 
     s = sub.add_parser("screenshot", help="save the current screen to local/screens/")
     s.add_argument("--label", default="screen")

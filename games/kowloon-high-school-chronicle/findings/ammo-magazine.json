@@ -1,0 +1,24 @@
+{
+ "label": "ammo-magazine",
+ "game_slug": "kowloon-high-school-chronicle",
+ "build_id": "6547E06ECC5E8F4B",
+ "title_id": "0100FF70134BA000",
+ "width": 4,
+ "address": "0x5567E6C2E0",
+ "value": 16,
+ "region_kind": "heap",
+ "region_start": "0x556784E000",
+ "region_offset": "0x61E2E0",
+ "main_nso_base": "0x7B3604000",
+ "sig_before": 96,
+ "sig_after": 92,
+ "signature": "2000740077006900630065002E0000000300000000000000000000000000000030C71CC254000000000000000000000000000000CC550100FFFF0200000005002800000000000000040000000000000000000000020000001E000A00040000001000000000000000000096437C007D003100FFFF050008001400010000070000CDCC1C4100000000000000000000000008C706C15400000000000000000000000000000000000000040000000000000000000000000000000000000000000000",
+ "recipe": [
+  "exact u32 search for 30 over the kernel scan set: 18767 candidates",
+  "fire rounds until the magazine reads 16",
+  "narrow by exact u32 16: exactly 1 candidate"
+ ],
+ "status": "confirmed-dead-process",
+ "notes": "Proven on 2026-09-13 by a guarded write of 25, which changed the display from 16/30 to 25/30. The process has since crashed so the address itself is dead; the signature is here to relocate it. A u16 holding 30 sits at offset -8 and is probably the magazine capacity. Bytes at +8, +32 and +48 look like floats that change with player position, so expect a signature score well below 100 percent and judge by the ranking rather than the absolute score.",
+ "captured_at": "2026-09-13T15:04:00"
+}

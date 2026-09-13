@@ -68,6 +68,14 @@ The four that bite most often:
 - Never write to more than one candidate to work out which is which. Narrow to
   a single address first and use `guard.write_from_session`, which refuses
   otherwise. Writing into unidentified memory crashed the game once already.
+- Save a finding as soon as a candidate looks real:
+  `switchlab findings capture <game> --label X --address 0x.. --width N --recipe "..."`.
+  Records go to `games/<slug>/findings/` and are committed. After a crash or a
+  relaunch, `findings relocate` re-derives the address from the stored byte
+  signature in seconds. Every address from the first session was lost because
+  this did not exist.
+- Match the write width to the field width. A 4-byte write into a 2-byte field
+  silently zeroes the neighbour, which is what probably crashed the game.
 - A poke returns no reply. Never wait for one.
 - Never connect to the netloader port to test whether it is open.
 
