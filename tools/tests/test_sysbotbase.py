@@ -169,3 +169,56 @@ def test_diagnose_reports_healthy_attach():
     report = client.diagnose()
     assert report["attached"] is True
     assert "should work" in report["verdict"]
+
+
+def test_parse_memory_regions_and_search_reply():
+    from switchlab.bridge.sysbotbase import parse_memory_regions, parse_search_reply
+
+    regs = parse_memory_regions("229E800000 4000 3 5 4A11840000 25614000 B 3 ")
+    assert (regs[0].addr, regs[0].size, regs[0].mem_type, regs[0].perm) == (0x229E800000, 0x4000, 3, 5)
+    assert regs[1].type_name == "mapped" and regs[1].readable and regs[1].writable
+    assert parse_search_reply("4A11841000 4A11842004 ! + ") == ([0x4A11841000, 0x4A11842004], True, True)
+    assert parse_search_reply("") == ([], False, False)
+
+
+def test_search_batches_commands_and_validates():
+    client = make_client({"search": "1000 2000 ", "getVersion": "2.5-lab1"})
+    regions = [(0x1000 * i, 0x100) for i in range(1, 900)]
+    addrs, inc, cap = client.search(4, 84, regions, max_cmd_len=2000)
+    sent = [m for m in client._sock.sent if m.startswith(b"search ")]
+    assert len(sent) > 1 and all(len(m) <= 2100 for m in sent)
+    assert addrs[:2] == [0x1000, 0x2000] and not inc and not cap
+    assert client.is_lab()
+    with pytest.raises(BridgeError):
+        client.search(2, 70000, [(0, 16)])
+
+
+def test_peek_raw_reads_binary_header_then_bytes():
+    client = SysBotBase("203.0.113.1")
+    client._sock = FakeSocket({})
+    payload = bytes(range(16))
+
+    class RawReader:
+        def __init__(self):
+            self.buf = (16).to_bytes(8, "little") + payload
+
+        def read(self, n):
+            out, self.buf = self.buf[:n], self.buf[n:]
+            return out
+
+        def close(self):
+            pass
+
+    client._reader = RawReader()
+    assert client.peek_raw(0x1000, 16) == payload
+    assert client._sock.sent[-1] == b"peekRaw 0x1000 16\r\n"
+
+
+def test_paused_context_always_resumes():
+    client = make_client({"pause": "0", "resume": "0"})
+    try:
+        with client.paused():
+            raise RuntimeError("boom")
+    except RuntimeError:
+        pass
+    assert client._sock.sent[-2:] == [b"pause\r\n", b"resume\r\n"]

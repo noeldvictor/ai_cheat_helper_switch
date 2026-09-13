@@ -51,6 +51,69 @@ def decode_result(rc: int) -> str:
 
 ALREADY_DEBUGGED = 0xF401  # kernel Busy from svcDebugActiveProcess
 
+# Horizon memory types (low byte of MemoryInfo.type), from libnx.
+MEM_TYPE_NAMES = {
+    0x0: "unmapped", 0x1: "io", 0x2: "normal", 0x3: "code_static", 0x4: "code_mutable",
+    0x5: "heap", 0x6: "shared", 0x7: "weird_mapped", 0x8: "module_code_static",
+    0x9: "module_code_mutable", 0xA: "ipc_buffer0", 0xB: "mapped", 0xC: "thread_local",
+    0xD: "transfer_isolated", 0xE: "transfer", 0xF: "process", 0x10: "reserved",
+    0x11: "ipc_buffer1", 0x12: "ipc_buffer3", 0x13: "kernel_stack", 0x14: "code_ro",
+    0x15: "code_rw", 0x16: "coverage", 0x17: "insecure",
+}
+
+
+class MemRegion(tuple):
+    """(addr, size, mem_type, perm) as reported by svcQueryDebugProcessMemory."""
+
+    __slots__ = ()
+
+    @property
+    def addr(self) -> int:
+        return self[0]
+
+    @property
+    def size(self) -> int:
+        return self[1]
+
+    @property
+    def mem_type(self) -> int:
+        return self[2]
+
+    @property
+    def perm(self) -> int:
+        return self[3]
+
+    @property
+    def readable(self) -> bool:
+        return bool(self.perm & 1)
+
+    @property
+    def writable(self) -> bool:
+        return bool(self.perm & 2)
+
+    @property
+    def type_name(self) -> str:
+        return MEM_TYPE_NAMES.get(self.mem_type, f"type_{self.mem_type:X}")
+
+
+def parse_memory_regions(line: str) -> list:
+    toks = line.split()
+    if len(toks) % 4:
+        raise BridgeError("queryMemoryAll reply is not a multiple of four tokens")
+    out = []
+    for i in range(0, len(toks), 4):
+        out.append(MemRegion((int(toks[i], 16), int(toks[i + 1], 16), int(toks[i + 2], 16), int(toks[i + 3], 16))))
+    return out
+
+
+def parse_search_reply(line: str) -> tuple:
+    """Return (addresses, incomplete, capped) from a `search` reply line."""
+    toks = line.split()
+    incomplete = "!" in toks
+    capped = "+" in toks
+    addrs = [int(t, 16) for t in toks if t not in ("!", "+")]
+    return addrs, incomplete, capped
+
 
 def parse_hex_bytes(line: str) -> bytes:
     """Turn a sys-botbase hex line into bytes. Empty line means failed read."""
@@ -274,6 +337,101 @@ class SysBotBase:
     def peek_heap(self, offset: int, size: int) -> bytes:
         """Read relative to the heap base."""
         return self._peek("peek", offset, size)
+
+    def peek_multi(self, pairs) -> bytes:
+        """`peekAbsoluteMulti` on known-mapped (address, size) pairs. The
+        sysmodule aborts on the first unreadable address, so a short reply
+        means at least one pair failed; callers fall back to single reads."""
+        args = " ".join(f"0x{a:X} {n}" for a, n in pairs)
+        total = sum(n for _, n in pairs)
+        return parse_hex_bytes(self.command(f"peekAbsoluteMulti {args}", timeout=max(self.timeout, 5.0 + total / 200_000)))
+
+    # -- sys-botbase-lab commands (fork in switch/sys-botbase-lab) ----------
+    def is_lab(self) -> bool:
+        return "-lab" in self.get_version()
+
+    def query_memory_all(self) -> list:
+        """Every mapped region from the kernel. Requires the lab build."""
+        line = self.command("queryMemoryAll", timeout=max(self.timeout, 30.0))
+        if not line.strip():
+            raise BridgeError("queryMemoryAll returned nothing (attach failed, or not the lab build)")
+        return parse_memory_regions(line)
+
+    def peek_raw(self, address: int, size: int) -> bytes:
+        """Binary read (lab build). Returns exactly `size` bytes or raises."""
+        if size <= 0 or size > (2 << 20):
+            raise BridgeError("peekRaw size must be 1..2 MiB")
+        if self._sock is None or self._reader is None:
+            raise BridgeError("not connected")
+        self._sock.settimeout(max(self.timeout, 5.0 + size / 500_000))
+        try:
+            self._sock.sendall(f"peekRaw 0x{address:X} {size}\r\n".encode("ascii"))
+            header = self._reader.read(8)
+            if len(header) != 8:
+                raise BridgeError("peekRaw: short header (not the lab build?)")
+            count = int.from_bytes(header, "little")
+            if count == 0:
+                raise BridgeError(f"peekRaw 0x{address:X} {size}: range not readable")
+            data = self._reader.read(count)
+        except socket.timeout as exc:
+            raise BridgeError("timeout during peekRaw") from exc
+        if len(data) != count or count != size:
+            raise BridgeError(f"peekRaw: expected {size} bytes, got {len(data)}")
+        return data
+
+    def search(self, width: int, value: int, regions, max_cmd_len: int = 16000) -> tuple:
+        """On-device exact search over (start, size) pairs. Returns
+        (addresses, incomplete, capped). Splits into several commands if the
+        region list would exceed the sysmodule's input line limit."""
+        if width not in (1, 2, 4, 8):
+            raise BridgeError("width must be 1, 2, 4 or 8")
+        if value < 0 or value >= (1 << (8 * width)):
+            raise BridgeError(f"value {value} does not fit in {width} bytes")
+        pairs = [f"0x{s:X} 0x{n:X}" for s, n in regions if n > 0]
+        addrs: list = []
+        incomplete = capped = False
+        batch: list = []
+        batches = []
+        length = 0
+        for p in pairs:
+            if batch and length + len(p) + 1 > max_cmd_len:
+                batches.append(batch)
+                batch, length = [], 0
+            batch.append(p)
+            length += len(p) + 1
+        if batch:
+            batches.append(batch)
+        for b in batches:
+            line = self.command(f"search {width} {value} " + " ".join(b), timeout=max(self.timeout, 120.0))
+            a, inc, cap = parse_search_reply(line)
+            addrs.extend(a)
+            incomplete |= inc
+            capped |= cap
+        return addrs, incomplete, capped
+
+    def pause(self) -> int:
+        """Freeze the game (lab build). Always pair with resume(); prefer paused()."""
+        return int(self.command("pause"))
+
+    def resume(self) -> int:
+        return int(self.command("resume"))
+
+    def paused(self):
+        """Context manager: pause on enter, resume on exit no matter what."""
+        client = self
+
+        class _Paused:
+            def __enter__(self_inner):
+                rc = client.pause()
+                if rc != 0:
+                    raise BridgeError(f"pause failed: {decode_result(rc)}")
+                return client
+
+            def __exit__(self_inner, *_exc):
+                client.resume()
+                return False
+
+        return _Paused()
 
     # -- screen ------------------------------------------------------------
     def screenshot(self) -> bytes:

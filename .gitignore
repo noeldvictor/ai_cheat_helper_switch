@@ -16,3 +16,11 @@ title.keys
 .venv/
 __pycache__/
 *.pyc
+
+# Switch sysmodule build outputs
+switch/**/build/
+switch/**/*.nsp
+switch/**/*.nso
+switch/**/*.elf
+switch/**/*.npdm
+switch/**/*.pfs0

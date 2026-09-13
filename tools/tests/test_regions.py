@@ -53,3 +53,21 @@ def test_scan_regions_excludes_code_and_main():
 
     regs = [Region(0, 10, "main"), Region(10, 20, "code"), Region(20, 30, "data"), Region(30, 40, "heap")]
     assert [(r.start, r.kind) for r in scan_regions(regs)] == [(20, "data"), (30, "heap")]
+
+
+def test_regions_from_kernel_and_scan_set():
+    from switchlab.bridge.sysbotbase import MemRegion
+    from switchlab.regions import regions_from_kernel, scan_regions_kernel
+
+    mem = [
+        MemRegion((0x1000, 0x1000, 0x3, 5)),   # code r-x
+        MemRegion((0x2000, 0x1000, 0x4, 3)),   # code mutable rw-
+        MemRegion((0x3000, 0x4000, 0xB, 3)),   # mapped rw-
+        MemRegion((0x7000, 0x1000, 0xB, 1)),   # mapped r-- (skip)
+        MemRegion((0x8000, 0x1000, 0x10, 0)),  # reserved (drop)
+        MemRegion((0x9000, 0x1000, 0x2, 3)),   # stack rw-
+    ]
+    regs = regions_from_kernel(mem)
+    assert [r.kind for r in regs] == ["code", "mdata", "data", "data", "stack"]
+    scan = scan_regions_kernel(regs)
+    assert [(r.start, r.kind) for r in scan] == [(0x2000, "mdata"), (0x3000, "data"), (0x9000, "stack")]

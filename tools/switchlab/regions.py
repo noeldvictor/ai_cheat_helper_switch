@@ -24,6 +24,8 @@ class Region:
     start: int
     end: int
     kind: str = "data"
+    mem_type: int = -1
+    perm: int = 0
 
     @property
     def size(self) -> int:
@@ -33,7 +35,13 @@ class Region:
         return self.start <= addr < self.end
 
     def describe(self) -> str:
-        return f"{self.kind:5} 0x{self.start:X}-0x{self.end:X}  {self.size / 1024**2:8.1f} MiB"
+        extra = ""
+        if self.mem_type >= 0:
+            from switchlab.bridge.sysbotbase import MEM_TYPE_NAMES
+
+            p = ("r" if self.perm & 1 else "-") + ("w" if self.perm & 2 else "-") + ("x" if self.perm & 4 else "-")
+            extra = f"  {MEM_TYPE_NAMES.get(self.mem_type, hex(self.mem_type)):>18} {p}"
+        return f"{self.kind:5} 0x{self.start:X}-0x{self.end:X}  {self.size / 1024**2:8.1f} MiB{extra}"
 
 
 def parse_mod0(head: bytes) -> dict:
@@ -197,3 +205,47 @@ def discover_regions(client, window: int = 32 << 20, bss_cap: int = 64 << 20, ma
 def scan_regions(regions: Iterable[Region]) -> List[Region]:
     """Regions worth scanning for game values: data and heap blocks only."""
     return [r for r in regions if r.kind in ("data", "heap")]
+
+
+# Memory types whose readable+writable pages can hold game state.
+SCANNABLE_TYPES = {0x2, 0x4, 0x5, 0x9, 0xB, 0x15}
+
+
+def regions_from_kernel(mem_regions, main_base: int = 0) -> List[Region]:
+    """Turn svcQueryDebugProcessMemory output into Regions with a kind."""
+    out: List[Region] = []
+    for m in mem_regions:
+        t = m.mem_type
+        if t in (0x0, 0x10):
+            continue
+        if t in (0x3, 0x8, 0x14):
+            kind = "code"
+        elif t == 0x5:
+            kind = "heap"
+        elif t in (0x4, 0x9, 0x15):
+            kind = "mdata"  # writable module data (.data/.bss)
+        elif t == 0xB:
+            kind = "data"
+        elif t == 0x2:
+            kind = "stack"
+        else:
+            kind = "other"
+        out.append(Region(m.addr, m.addr + m.size, kind, t, m.perm))
+    return out
+
+
+def scan_regions_kernel(regions: Iterable[Region]) -> List[Region]:
+    """Readable+writable regions of scannable types, largest data first."""
+    picked = [r for r in regions if r.mem_type in SCANNABLE_TYPES and (r.perm & 3) == 3]
+    order = {"mdata": 0, "heap": 1, "data": 2, "stack": 3}
+    return sorted(picked, key=lambda r: (order.get(r.kind, 9), -r.size))
+
+
+def discover_regions_auto(client, log=print) -> List[Region]:
+    """Kernel listing on the lab build; pointer harvesting otherwise."""
+    if client.is_lab():
+        regs = regions_from_kernel(client.query_memory_all())
+        log(f"kernel reports {len(regs)} mapped regions")
+        return regs
+    log("upstream sys-botbase: falling back to pointer harvesting (about 2 minutes)")
+    return discover_regions(client, log=log)

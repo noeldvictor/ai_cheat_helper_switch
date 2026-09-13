@@ -8,7 +8,8 @@ import sys
 
 from switchlab.bridge.sysbotbase import BridgeError, SysBotBase, decode_result
 from switchlab.identity import read_identity
-from switchlab.regions import discover_regions, scan_regions
+from switchlab.regions import discover_regions, discover_regions_auto, scan_regions, scan_regions_kernel
+from switchlab.scan import OPS, ScanSession, read_values, refine, start_exact
 from switchlab.screen import capture_screenshot
 
 
@@ -44,12 +45,58 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
 
 def cmd_regions(args: argparse.Namespace) -> int:
     with SysBotBase(_host(args), args.port, timeout=120) as client:
-        regions = discover_regions(client, max_probes=args.max_probes, depth=args.depth)
-    print("mapped regions:")
-    for r in regions:
+        if args.harvest:
+            regions = discover_regions(client, max_probes=args.max_probes, depth=args.depth)
+            scan = scan_regions(regions)
+        else:
+            regions = discover_regions_auto(client)
+            scan = scan_regions_kernel(regions) if any(r.mem_type >= 0 for r in regions) else scan_regions(regions)
+    if args.all:
+        print("mapped regions:")
+        for r in regions:
+            print("  " + r.describe())
+    print(f"scan set: {sum(r.size for r in scan) / 1024**2:.1f} MiB in {len(scan)} blocks")
+    for r in scan[: args.show]:
         print("  " + r.describe())
-    scan = scan_regions(regions)
-    print(f"scan set: {sum(r.size for r in scan) / 1024**2:.1f} MiB in {len(scan)} data blocks")
+    if len(scan) > args.show:
+        print(f"  ... {len(scan) - args.show} more (use --show N)")
+    return 0
+
+
+def _require_lab(client: SysBotBase) -> None:
+    if not client.is_lab():
+        raise BridgeError("this command needs the sys-botbase-lab build on the Switch (getVersion should end in -lab)")
+
+
+def cmd_scan(args: argparse.Namespace) -> int:
+    with SysBotBase(_host(args), args.port, timeout=120) as client:
+        ident = read_identity(client)
+        if ident is None:
+            raise BridgeError("no game is running")
+        if args.scan_cmd == "new":
+            _require_lab(client)
+            regions = scan_regions_kernel(discover_regions_auto(client, log=lambda *_: None))
+            pairs = [(r.start, r.size) for r in regions]
+            print(f"searching {sum(n for _, n in pairs) / 1024**2:.0f} MiB in {len(pairs)} regions on the Switch...")
+            session = start_exact(client, pairs, args.width, args.value, args.label, ident.build_id, log=print)
+        elif args.scan_cmd == "next":
+            session = ScanSession.load(ident.build_id, args.label)
+            op = "exact" if args.value is not None else args.op
+            if op is None:
+                raise BridgeError("give --value N or one of --changed/--unchanged/--increased/--decreased")
+            refine(client, session, op, args.value, log=print)
+        elif args.scan_cmd == "show":
+            session = ScanSession.load(ident.build_id, args.label)
+            current = read_values(client, session.candidates[: args.limit], session.width)
+            print(f"session {session.label}: {len(session.candidates)} candidates, width {session.width}")
+            for a in session.candidates[: args.limit]:
+                print(f"  0x{a:X}  now={current.get(a, '?')}  last={session.values.get(a, '?')}")
+            for h in session.history[-5:]:
+                print(f"  {h['time']} {h['op']} {h.get('value')}: {h['before']} -> {h['after']}")
+            return 0
+        else:
+            raise BridgeError("unknown scan command")
+    print(f"saved {session.path.relative_to(session.path.parents[2]) if session.path.is_relative_to(session.path.parents[2]) else session.path}")
     return 0
 
 
@@ -92,7 +139,27 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("regions", help="discover mapped data regions by following pointers from the main module")
     s.add_argument("--max-probes", type=int, default=60)
     s.add_argument("--depth", type=int, default=2, help="pointer-following levels (1 = main module only)")
+    s.add_argument("--harvest", action="store_true", help="force pointer harvesting even on the lab build")
+    s.add_argument("--all", action="store_true", help="print every mapped region, not just the scan set")
+    s.add_argument("--show", type=int, default=12, help="how many scan-set regions to print")
     s.set_defaults(func=cmd_regions)
+
+    s = sub.add_parser("scan", help="candidate narrowing sessions (lab build)")
+    ss = s.add_subparsers(dest="scan_cmd", required=True)
+    n = ss.add_parser("new", help="on-device exact search into a new session")
+    n.add_argument("--label", required=True)
+    n.add_argument("--width", type=int, choices=[1, 2, 4, 8], default=4)
+    n.add_argument("--value", type=int, required=True)
+    x = ss.add_parser("next", help="narrow an existing session by re-reading candidates")
+    x.add_argument("--label", required=True)
+    x.add_argument("--value", type=int, help="keep candidates equal to this value")
+    g = x.add_mutually_exclusive_group()
+    for op in OPS[1:]:
+        g.add_argument(f"--{op}", dest="op", action="store_const", const=op)
+    w = ss.add_parser("show", help="list candidates with current values")
+    w.add_argument("--label", required=True)
+    w.add_argument("--limit", type=int, default=20)
+    s.set_defaults(func=cmd_scan)
 
     s = sub.add_parser("screenshot", help="save the current screen to local/screens/")
     s.add_argument("--label", default="screen")
