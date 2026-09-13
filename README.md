@@ -35,10 +35,12 @@ difficulty for each, and the research log holds the evidence.
 4. Infinite HP, which holds current HP up every frame
 5. Max stats, such as attack and defence
 6. God mode, which stops damage being subtracted at all
-7. Double walk and run speed
-8. EXP multipliers at x2, x4, x8 and x16
-9. EXP multiplier at x100
-10. Fast forward, if the game has a speed value that can be changed
+7. Infinite ammo, meaning the loaded magazine never drops
+8. Max reserve ammo
+9. Double walk and run speed
+10. EXP multipliers at x2, x4, x8 and x16
+11. EXP multiplier at x100
+12. Fast forward, if the game has a speed value that can be changed
 
 Items 2 to 6 are four different promises and are kept separate on purpose. Max
 HP only raises the ceiling, so the player stays at 100/9999 until healed.
@@ -112,15 +114,30 @@ that pass the definition of done in `AGENTS.md` are marked verified.
 Run from the repository root. The Switch IP is passed at run time and never
 committed.
 
+Set up once:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+```
+
+Then, with the Switch IP passed at run time and never committed:
+
 ```bash
 export SWITCH_HOST=<switch-ip>
-PYTHONPATH=tools python3 -m switchlab status       # bridge version + game identity
-PYTHONPATH=tools python3 -m switchlab diagnose     # why memory reads fail, if they do
-PYTHONPATH=tools python3 -m switchlab regions      # mapped data regions (about 2 minutes)
-PYTHONPATH=tools python3 -m switchlab screenshot   # JPEG into local/screens/
-PYTHONPATH=tools python3 -m switchlab peek main 0x0 64
-PYTHONPATH=tools python3 -m pytest tools/tests -q
+PYTHONPATH=tools .venv/bin/python -m switchlab status       # bridge version + game identity
+PYTHONPATH=tools .venv/bin/python -m switchlab diagnose     # why memory reads fail, if they do
+PYTHONPATH=tools .venv/bin/python -m switchlab regions      # mapped regions and the scan set
+PYTHONPATH=tools .venv/bin/python -m switchlab screenshot   # JPEG into local/screens/
+PYTHONPATH=tools .venv/bin/python -m switchlab scan new --label hp --width 4 --value 100
+PYTHONPATH=tools .venv/bin/python -m switchlab scan next --label hp --value 85
+PYTHONPATH=tools .venv/bin/python -m switchlab files ls /atmosphere/contents
+PYTHONPATH=tools .venv/bin/python -m pytest tools/tests -q
 ```
+
+The helper itself needs only the standard library, so the plain `python3` still
+works for everything except disassembly. The venv exists for capstone, used by
+the code-patch cheats, and for pytest. `.venv/` is git-ignored.
 
 ## Repository layout
 

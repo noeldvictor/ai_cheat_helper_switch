@@ -71,3 +71,43 @@ Next experiment: full snapshot of the 3 data blocks with the user standing
   still, then exact scan for AP = 84 as u32 (then u16), then have the user
   spend AP and rescan candidates only.
 ```
+
+## 2026-09-13 14:46 — lab build verified; first searches run
+
+```text
+Date/time: 2026-09-13 14:20 to 14:50 local
+Game version / TID / BID: 1.0.0 / 0100FF70134BA000 / 6547E06ECC5E8F4B
+Tool and version: sys-botbase-lab 2.5-lab2; switchlab 0.1.0
+Target effect: measure the new bridge, then start real searches
+Visible state before: first dungeon floor, Kuro, HP 100/100, AP 084, Lv 1,
+  weapon magazine 30/30 with 0150 in reserve
+  (local/screens/20260913-144626-ammo-check.jpg)
+Search type / relation / region: exact u32 and u16 over the kernel-reported
+  scan set, 787 MiB in 124 readable and writable blocks
+Candidate address or expression: none confirmed yet
+Data type: u32 for all three sessions
+Original value or bytes: none written
+Experimental value or bytes: none written
+Was the game paused?: no
+Visible result: bridge measurements, all large improvements over the upstream
+  build. Region listing 166 regions in 0.06 s, against about 110 s by pointer
+  harvesting. Binary read 5.06 MB/s, against 0.7 MB/s over hex, so a full
+  583 MiB snapshot drops from about 14 minutes to about 2.
+  Value frequency over the scan set, candidate cap 200000:
+    100 (HP)            u32 3299     u16 46540
+    150 (reserve ammo)  u32 8062     u16 15194
+    30  (magazine)      u32 18776    u16 128888
+    84  (AP)            capped       capped
+    1   (level)         capped       capped
+  Sessions created: hp 3282 candidates, ammo-reserve 8070, ammo-mag 18767.
+Second-read result: not applicable
+Restored?: nothing was written
+Survived state change?: not yet tested
+Survived relaunch?: not yet tested
+Verdict: rescan. AP and level cannot be searched directly and must be reached
+  through a structure whose address is already known.
+Evidence paths: local/screens/20260913-144626-ammo-check.jpg (ignored),
+  local/sessions/6547E06ECC5E8F4B-*.json (ignored)
+Next experiment: user takes damage and fires rounds, then narrow each session
+  by the new exact value.
+```

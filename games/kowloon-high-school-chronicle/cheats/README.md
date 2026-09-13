@@ -18,6 +18,8 @@ tracked in `../cheat-notes.md`.
 | Max Attack | value write | attack stat set high without overflowing the damage formula | not started |
 | Max Defence | value write | defence stat set high | not started |
 | God Mode | instruction patch | damage is never subtracted; the bar does not move | not started |
+| Infinite Ammo (magazine) | value lock | the loaded round count never drops | searching |
+| Max Reserve Ammo | value write | spare ammo set high | searching |
 | Walk/Run Speed x2 | value or patch | movement doubled | not started |
 | EXP x2 | instruction patch | EXP gained per kill doubled | not started |
 | EXP x4 | instruction patch | EXP gained per kill quadrupled | not started |
@@ -32,6 +34,8 @@ Rules for this file:
   each entry is verified or experimental.
 - Only one EXP multiplier may be enabled at a time.
 - Infinite HP and God Mode overlap. Enable one or the other, not both.
+- Ammo entries cover one weapon each unless the decrement instruction is
+  patched instead. Say which weapon an entry was built against.
 - Enable experimental entries one at a time.
 - An entry is marked verified only after it passes the definition of done in
   `AGENTS.md`, which includes surviving a full game relaunch.

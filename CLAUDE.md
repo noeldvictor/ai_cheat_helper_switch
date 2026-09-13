@@ -40,17 +40,27 @@ decorating it.
 
 ## Quick start for a research session
 
+Use the project venv. Create it with `python3 -m venv .venv` and
+`.venv/bin/pip install -r requirements.txt` if it is missing. Add any new
+dependency to `requirements.txt`, never with a bare `pip install`.
+
 ```bash
 export SWITCH_HOST=<ip the user gives in chat>
-PYTHONPATH=tools python3 -m switchlab status      # identity; exit 1 if attach looks broken
-PYTHONPATH=tools python3 -m switchlab diagnose    # must say "can attach" before any scan
-PYTHONPATH=tools python3 -m switchlab regions     # mapped regions and the scan set
-PYTHONPATH=tools python3 -m switchlab screenshot  # read the visible value yourself
-PYTHONPATH=tools python3 -m switchlab scan new --label ap --width 4 --value 84
-PYTHONPATH=tools python3 -m switchlab scan next --label ap --value 80
-PYTHONPATH=tools python3 -m switchlab files ls /atmosphere/contents
-PYTHONPATH=tools python3 -m pytest tools/tests -q
+PYTHONPATH=tools .venv/bin/python -m switchlab status      # identity; exit 1 if attach looks broken
+PYTHONPATH=tools .venv/bin/python -m switchlab diagnose    # must say "can attach" before any scan
+PYTHONPATH=tools .venv/bin/python -m switchlab regions     # mapped regions and the scan set
+PYTHONPATH=tools .venv/bin/python -m switchlab screenshot  # read the visible value yourself
+PYTHONPATH=tools .venv/bin/python -m switchlab scan new --label hp --width 4 --value 100
+PYTHONPATH=tools .venv/bin/python -m switchlab scan next --label hp --value 85
+PYTHONPATH=tools .venv/bin/python -m switchlab files ls /atmosphere/contents
+PYTHONPATH=tools .venv/bin/python -m pytest tools/tests -q
 ```
+
+Before searching a value, check how common it is. Small numbers such as 1 or a
+two-digit stat match hundreds of thousands of addresses and hit the candidate
+cap, which truncates the set and can exclude the real address. Prefer a larger
+or more distinctive value, or reach the field through a structure whose address
+is already known.
 
 The `scan` and `files` commands need the `sys-botbase-lab` build on the
 Switch, which reports a version ending in `-lab`. With the upstream build,

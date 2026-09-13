@@ -73,6 +73,13 @@ void searchValue(u64 width, u64 value, u64* starts, u64* sizes, u64 count);
 Result pauseProcess(void);
 Result resumeProcess(void);
 
+// ---- sys-botbase-lab candidate set (search.c) ----
+void searchNew(u64 width, u64 value, u64* starts, u64* sizes, u64 count);
+void searchNext(const char* op, u64 value);
+void searchList(u64 offset, u64 limit);
+void searchCount(void);
+void searchReset(void);
+
 // ---- sys-botbase-lab file transfer (fsxfer.c) ----
 void fsList(const char* path);
 void fsGet(const char* path);

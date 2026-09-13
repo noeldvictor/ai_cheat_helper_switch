@@ -73,10 +73,12 @@ Specific cheats requested on 2026-09-13, in the agreed order of work:
 4. Infinite HP (lock current HP each frame)
 5. Max stats, such as attack and defence
 6. God mode (damage never subtracted; needs a code patch)
-7. Double walk and run speed
-8. EXP multipliers at x2, x4, x8, x16
-9. EXP multiplier at x100
-10. Fast forward, if the game has a speed or delta-time value to change
+7. Infinite ammo, meaning the loaded magazine never drops
+8. Max reserve ammo
+9. Double walk and run speed
+10. EXP multipliers at x2, x4, x8, x16
+11. EXP multiplier at x100
+12. Fast forward, if the game has a speed or delta-time value to change
 
 The user asked on 2026-09-13 for the health and stat cheats to be described
 precisely rather than lumped together as "god mode". Keep them as separate

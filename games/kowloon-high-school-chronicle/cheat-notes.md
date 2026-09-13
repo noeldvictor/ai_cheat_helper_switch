@@ -12,24 +12,44 @@ Stages: `not started`, `searching`, `candidates`, `confirmed`, `stable`,
 it passes the definition of done in `AGENTS.md`, which includes a full game
 relaunch.
 
-Known starting values, from a screenshot taken 2026-09-13 on the first dungeon
-floor: character Kuro, HP 100/100, AP 084, Lv 1.
+Known starting values, from screenshots taken 2026-09-13 on the first dungeon
+floor: character Kuro, HP 100/100, AP 084, Lv 1, weapon magazine 30/30 with
+0150 in reserve. Two other weapon slots show 1/1.
+
+## How common each value is
+
+Measured against the live game on 2026-09-13, over a 787 MiB scan set. This
+decides which values can be searched directly. The candidate cap is 200000.
+
+| Value | As u32 | As u16 |
+|---|---|---|
+| 100 (HP) | 3299 | 46540 |
+| 150 (reserve ammo) | 8062 | 15194 |
+| 30 (magazine) | 18776 | 128888 |
+| 84 (AP) | capped | capped |
+| 1 (level) | capped | capped |
+
+HP, ammo and reserve are all searchable as u32. AP and level are too common to
+search directly and need a different approach: find the player structure from a
+known field, then read the neighbouring values.
 
 ## Status
 
 | Cheat | Stage | Address form | Next step |
 |---|---|---|---|
 | Max Money | not started | none | read the visible amount, then exact search |
-| Max HP | not started | none | find the pair 100/100 and identify which is the cap |
-| Full Heal | not started | none | same search as Max HP |
-| Infinite HP | not started | none | needs the current-HP address |
+| Max HP | searching | none | session `hp`, 3282 candidates; narrow after damage |
+| Full Heal | searching | none | same session as Max HP |
+| Infinite HP | searching | none | same session as Max HP |
 | Max Stats | not started | none | open the status screen and read each stat |
 | God Mode (damage patch) | not started | none | needs the current-HP address first |
+| Infinite Ammo (magazine) | searching | none | session `ammo-mag`, 18767 candidates; narrow after firing |
+| Max Reserve Ammo | searching | none | session `ammo-reserve`, 8070 candidates |
 | Walk/Run Speed x2 | not started | none | look for a float near the player structure |
 | EXP x2, x4, x8, x16 | not started | none | needs the EXP-add instruction |
 | EXP x100 | not started | none | same patch site, multiply instead of shift |
 | Fast Forward | not started | none | confirm a speed or delta-time value exists |
-| Infinite AP (candidate) | not started | none | confirm what AP does before agreeing to it |
+| Infinite AP (candidate) | not started | none | find it from the player structure, not by search |
 
 ## Max Money
 
@@ -109,6 +129,36 @@ order below, because each one produces the information the next one needs.
 - Verification: hit an enemy and confirm the damage number rose.
 - Next step: user opens the status screen so I can read every stat from a
   screenshot, then search them one at a time.
+
+## Ammunition
+
+The status display shows a loaded magazine and a reserve count per weapon.
+At the time of the first search the active weapon read 30/30 with 0150 in
+reserve, and two other slots read 1/1. Each weapon has its own pair of
+counters, so a value lock covers one weapon only. Covering every weapon needs
+a patch on the instruction that decrements the count, which is the same kind
+of work as god mode.
+
+### Infinite Ammo (magazine)
+
+- Stage: searching
+- Session: `ammo-mag`, u32, started from value 30, 18767 candidates
+- Notes: locking the loaded count means the weapon never needs reloading. If
+  the game reloads by moving rounds from reserve to magazine, locking the
+  magazine alone may still drain the reserve, so check both after the lock.
+- Verification: fire repeatedly and confirm the count does not fall and the
+  weapon keeps firing. A frozen number with no shots coming out means the
+  game tracks ammo somewhere else as well.
+- Next step: user fires a few rounds, then narrow the session to the new count.
+
+### Max Reserve Ammo
+
+- Stage: searching
+- Session: `ammo-reserve`, u32, started from value 150, 8070 candidates
+- Notes: 150 is a more distinctive value than 30, so this session should narrow
+  faster and may point at the weapon structure, which would give the magazine
+  address as a nearby field.
+- Next step: user fires and reloads so the reserve drops, then narrow.
 
 ## Walk/Run Speed x2
 

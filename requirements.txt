@@ -1,0 +1,11 @@
+# Python dependencies for the switchlab helper.
+#
+#   python3 -m venv .venv
+#   .venv/bin/pip install -r requirements.txt
+#   PYTHONPATH=tools .venv/bin/python -m switchlab status
+#
+# .venv/ is git-ignored. The helper itself needs nothing outside the standard
+# library; everything here supports analysis or testing.
+
+capstone==5.0.6     # ARM64 disassembly for the code-patch cheats
+pytest>=8.0         # unit tests in tools/tests

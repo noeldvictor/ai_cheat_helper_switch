@@ -422,6 +422,10 @@ switch/            sysmodule fork source and recovery binaries
 ```
 
 - The helper runs on the Linux machine that hosts Claude Code. Use bash.
+- Python dependencies belong in `requirements.txt` and are installed into the
+  project venv at `.venv/`, which Git ignores. Never install with a bare
+  `pip install` into the system interpreter. Run helper commands and tests as
+  `PYTHONPATH=tools .venv/bin/python -m ...`.
 - Inspect existing files and Git status before editing.
 - Preserve user notes and unrelated changes.
 - Make small, reviewable edits.

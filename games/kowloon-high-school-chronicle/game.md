@@ -42,10 +42,12 @@ this exact Build ID.
 | 3 | Infinite HP | lock current HP to its maximum each frame | easy |
 | 4 | Max stats (attack, defence, others) | write each stat field | easy to medium |
 | 5 | God mode | patch the instruction that subtracts damage | medium to hard |
-| 6 | Double walk and run speed | edit the speed value, likely a float | medium |
-| 7 | EXP x2, x4, x8, x16 | patch the EXP-add instruction with a left shift | hard |
-| 8 | EXP x100 | same patch site, using a multiply instruction | hard |
-| 9 | Fast forward | unknown; see the note below | unknown |
+| 6 | Infinite ammo (magazine) | lock the loaded round count | easy |
+| 7 | Max reserve ammo | write the reserve count | easy |
+| 8 | Double walk and run speed | edit the speed value, likely a float | medium |
+| 9 | EXP x2, x4, x8, x16 | patch the EXP-add instruction with a left shift | hard |
+| 10 | EXP x100 | same patch site, using a multiply instruction | hard |
+| 11 | Fast forward | unknown; see the note below | unknown |
 
 Candidate, not yet agreed: infinite AP. The status bar shows `AP 084` next to
 HP, so AP is a spendable resource, but what it does is not yet confirmed. If it

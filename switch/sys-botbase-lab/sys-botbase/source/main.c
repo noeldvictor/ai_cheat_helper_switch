@@ -17,7 +17,7 @@
 #define TITLE_ID 0x430000000000000B
 #define HEAP_SIZE 0x00480000
 #define THREAD_SIZE 0x1A000
-#define VERSION_S "2.5-lab2"
+#define VERSION_S "2.5-lab3"
 
 typedef enum {
     Active = 0,
@@ -587,6 +587,58 @@ int argmain(int argc, char** argv)
     if (!strcmp(argv[0], "queryMemoryAll"))
     {
         queryMemoryAll();
+    }
+
+    if (!strcmp(argv[0], "searchNew"))
+    {
+        if (argc < 5 || (argc - 3) % 2 != 0)
+            return 0;
+        u64 width = parseStringToInt(argv[1]);
+        u64 value = parseStringToInt(argv[2]);
+        u64 n = (argc - 3) / 2;
+        u64* starts = malloc(sizeof(u64) * n);
+        u64* sizes = malloc(sizeof(u64) * n);
+        if (starts == NULL || sizes == NULL)
+        {
+            free(starts);
+            free(sizes);
+            printf("ERR mem\n");
+            return 0;
+        }
+        for (u64 i = 0; i < n; i++)
+        {
+            starts[i] = parseStringToInt(argv[3 + i * 2]);
+            sizes[i] = parseStringToInt(argv[4 + i * 2]);
+        }
+        searchNew(width, value, starts, sizes, n);
+        free(starts);
+        free(sizes);
+    }
+
+    if (!strcmp(argv[0], "searchNext"))
+    {
+        if (argc != 2 && argc != 3)
+            return 0;
+        u64 value = (argc == 3) ? parseStringToInt(argv[2]) : 0;
+        searchNext(argv[1], value);
+    }
+
+    if (!strcmp(argv[0], "searchList"))
+    {
+        if (argc != 3)
+            return 0;
+        searchList(parseStringToInt(argv[1]), parseStringToInt(argv[2]));
+    }
+
+    if (!strcmp(argv[0], "searchCount"))
+    {
+        searchCount();
+    }
+
+    if (!strcmp(argv[0], "searchReset"))
+    {
+        searchReset();
+        printf("OK\n");
     }
 
     if (!strcmp(argv[0], "fsList"))
