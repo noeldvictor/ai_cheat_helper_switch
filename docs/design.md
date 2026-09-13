@@ -145,7 +145,7 @@ Git.
 
 1. Bridge client + identity + screenshot, read-only, tested against the real
    Switch.
-2. Snapshot + scan + narrowing with the live game (gold as first target).
+2. Snapshot + scan + narrowing with the live game (Lucre as first target).
 3. Guarded single-candidate test write and restore.
 4. Cheat-file generation, opcode lint, FTP deploy with backup.
 5. Relaunch validation and pointer search.
@@ -157,4 +157,4 @@ Git.
 - Bridge choice: decided 2026-09-13, sys-botbase v2.5 installed and verified.
 - Atmosphère 1.11 and firmware 22.1 reported; sys-botbase v2.5 boots and answers on them.
 - Whether an FTP server is already on the Switch.
-- First target (recommended: gold).
+- First target: Lucre in Legend of Mana (decided 2026-09-13).

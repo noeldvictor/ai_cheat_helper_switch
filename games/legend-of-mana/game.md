@@ -1,29 +1,29 @@
 # Legend of Mana — Game Card
 
-Status: deferred on 2026-09-13; the user chose Dragon Quest Heroes: Torneko's Mystery Dungeon -Classic HD- as the first game
+Status: confirmed first game (user decision 2026-09-13, after briefly choosing Torneko)
 
 ## Baseline
 
 - Legal ownership confirmed: yes
 - Offline single-player use confirmed: yes
-- Platform: physical Switch and Windows emulator are both available
-- First research platform: unknown
+- Platform: physical first-generation Switch running Atmosphère
+- First research platform: physical Switch (sys-botbase bridge)
 - Game version: unknown
 - Title ID: unknown
 - Build ID: unknown
 - Save backup status: unknown
-- Date last verified: 2026-07-28
+- Date last verified: 2026-09-13
 
 ## Tool state
 
-- Atmosphère version: unknown
-- Switch system firmware version: unknown
-- Emulator and version: unknown
-- Breeze version: not installed or not reported
-- EdiZon-SE version: not installed or not reported
-- Noexes version: not installed or not reported
-- PointerSearcher-SE version: not installed or not reported
-- Connection method: unknown
+- Atmosphère version: 1.11 (user-reported 2026-09-13)
+- Switch system firmware version: 22.1 (user-reported 2026-09-13)
+- Breeze: installed, version not reported
+- EdiZon-SE: installed, version not reported
+- Ultrahand / EdiZon overlay: installed for cheat toggling
+- sys-botbase v2.5: installed and verified 2026-09-13 (answers on port 6000)
+- Noexes / PointerSearcher-SE: not installed
+- Connection method: local Wi-Fi
 
 ## Desired effects
 
@@ -47,15 +47,13 @@ Only one target may be experimental at a time.
 - Visible starting value: unknown
 - Proposed representation: start with exact integer searches, testing likely
   widths one at a time
-- Region: choose after the active platform/tool is known
+- Region: HEAP first
 - Search status: not started
 - Writes performed: none
 - Current game state: unknown; do not assume a process is running or paused
 
 ## Required next evidence
 
-- User confirms the exact title is `Legend of Mana`.
-- User chooses emulator or physical Switch for the first session.
-- User reports the active emulator/version or Atmosphère/firmware version.
-- User launches the game in an offline-safe state.
-- User reports the visible Lucre value, or chooses another exact first target.
+- Game launched offline; Title ID, Build ID, and game version read from the
+  running copy through the bridge.
+- Visible Lucre value read from a screenshot and confirmed by the user.

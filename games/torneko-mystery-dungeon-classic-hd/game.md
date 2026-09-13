@@ -1,6 +1,6 @@
 # Dragon Quest Heroes: Torneko's Mystery Dungeon -Classic HD- — Game Card
 
-Status: confirmed first game (2026-09-13)
+Status: deferred (2026-09-13); the user decided to start with Legend of Mana
 
 ## Baseline
 

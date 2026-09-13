@@ -42,14 +42,13 @@ PC side:
 
 ## First game
 
-- Name: Dragon Quest Heroes: Torneko's Mystery Dungeon -Classic HD-
-- Edition: Nintendo Switch (first-generation) version, confirmed by the user.
-- Released 2026-09-09 (Square Enix). Also exists on Switch 2, PS5, Xbox, and
-  Steam; those editions are out of scope.
+- Name: Legend of Mana (Nintendo Switch), confirmed by the user 2026-09-13
+  after briefly choosing Torneko.
 - Game version: unknown.
 - Title ID: unknown.
 - Build ID: unknown.
-- Previous candidate `Legend of Mana` is deferred, not abandoned.
+- Dragon Quest Heroes: Torneko's Mystery Dungeon -Classic HD- (Switch 1
+  version, owned) is deferred as the second game.
 
 Do not copy a Title ID or Build ID from a website and assume it matches the
 installed game. Read both from the user's running copy or installed tool.
@@ -67,9 +66,8 @@ Cheat kinds the system should support (all chosen by the user):
    instruction patches for the exact Build ID.
 4. Item and inventory edits.
 
-The first target value is undecided. Gold is the recommended first target
-because it is a visible integer that changes naturally. Work on one
-falsifiable target at a time.
+The first target is Lucre (money) in Legend of Mana: a visible integer that
+changes naturally. Work on one falsifiable target at a time.
 
 ## Assistance preference
 
@@ -96,4 +94,5 @@ falsifiable target at a time.
 2. Whether an FTP server (sys-ftpd, ftpd) is installed on the Switch.
 3. Done 2026-09-13: research bridge is sys-botbase v2.5, installed and answering.
 4. The Switch's local IP address, shared in chat only, when a session starts.
-5. Later: game version, Title ID, and Build ID read from the running game.
+5. Later: game version, Title ID, and Build ID read from the running game
+   (Legend of Mana).
