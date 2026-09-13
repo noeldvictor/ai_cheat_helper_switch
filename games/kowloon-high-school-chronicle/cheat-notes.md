@@ -43,7 +43,7 @@ known field, then read the neighbouring values.
 | Infinite HP | searching | none | same session as Max HP |
 | Max Stats | not started | none | open the status screen and read each stat |
 | God Mode (damage patch) | not started | none | needs the current-HP address first |
-| Infinite Ammo (magazine) | searching | none | session `ammo-mag`, 18767 candidates; narrow after firing |
+| Infinite Ammo (magazine) | confirmed | heap, this launch only | find a stable form across a relaunch |
 | Max Reserve Ammo | searching | none | session `ammo-reserve`, 8070 candidates |
 | Walk/Run Speed x2 | not started | none | look for a float near the player structure |
 | EXP x2, x4, x8, x16 | not started | none | needs the EXP-add instruction |
@@ -141,15 +141,30 @@ of work as god mode.
 
 ### Infinite Ammo (magazine)
 
-- Stage: searching
-- Session: `ammo-mag`, u32, started from value 30, 18767 candidates
+- Stage: confirmed
+- Address this launch: `0x5567E6C2E0`, u32
+- Region: heap block `0x556784E000`-`0x5568FFE000`, 23.7 MiB, read and write
+- Offset within that region: `0x61E2E0`
+- Main NSO base that launch: `0x7B3604000`
+- Stable form: none yet. This is a heap address from one launch and must not
+  be shipped as a cheat.
+- How it was found: session `ammo-mag`, exact u32 search for 30 gave 18767
+  candidates; after firing, one candidate held 16 and the rest did not.
+- Proof: guarded write of 25 with the original 16 recorded first. The status
+  display changed from 16/30 to 25/30, then the original was written back and
+  read back as 16. Screenshots are in `local/screens/`, timestamps 15:04 and
+  15:05 on 2026-09-13.
+- Nearby fields: a u16 holding 30 sits at offset -8, which is probably the
+  magazine capacity. The reserve count of 150 is not within 2 KiB, so it lives
+  in a different structure.
 - Notes: locking the loaded count means the weapon never needs reloading. If
   the game reloads by moving rounds from reserve to magazine, locking the
   magazine alone may still drain the reserve, so check both after the lock.
-- Verification: fire repeatedly and confirm the count does not fall and the
-  weapon keeps firing. A frozen number with no shots coming out means the
-  game tracks ammo somewhere else as well.
-- Next step: user fires a few rounds, then narrow the session to the new count.
+- Verification still to do: fire repeatedly with the value locked and confirm
+  rounds keep coming out. A frozen number with no shots means ammo is also
+  tracked somewhere else.
+- Next step: relaunch the game, find the value again, and run a pointer search
+  across the two launches to get an address form that survives a restart.
 
 ### Max Reserve Ammo
 

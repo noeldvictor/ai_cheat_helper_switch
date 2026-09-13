@@ -111,3 +111,37 @@ Evidence paths: local/screens/20260913-144626-ammo-check.jpg (ignored),
 Next experiment: user takes damage and fires rounds, then narrow each session
   by the new exact value.
 ```
+
+## 2026-09-13 15:05 — magazine counter confirmed by a reversible write
+
+```text
+Date/time: 2026-09-13 15:00 to 15:06 local
+Game version / TID / BID: 1.0.0 / 0100FF70134BA000 / 6547E06ECC5E8F4B
+Tool and version: sys-botbase-lab 2.5-lab2; switchlab 0.1.0
+Target effect: infinite ammo, magazine counter
+Visible state before: magazine 16/30 after firing, reserve 0150, HP 100/100
+Search type / relation / region: session `ammo-mag`, exact u32, kernel scan set
+Candidate address or expression: 0x5567E6C2E0
+Data type: u32
+Original value or bytes: 16
+Experimental value or bytes: 25
+Was the game paused?: no
+Visible result: 18767 candidates for 30 narrowed to exactly 1 after firing
+  brought the count to 16. The guarded write of 25 changed the on-screen
+  display from 16/30 to 25/30.
+Second-read result: read back 25 after the write, then 16 after the restore
+Restored?: yes, verified by a second read
+Survived state change?: not yet tested
+Survived relaunch?: not tested; this is a heap address from one launch
+Verdict: confirmed for this launch. Not promotable until a stable form exists.
+Evidence paths: local/screens/20260913-150029-after-firing.jpg,
+  local/screens/20260913-150559-after-poke-timeout.jpg (both ignored)
+Next experiment: relaunch, find the magazine again, and pointer search across
+  the two launches.
+
+Tool defect found and fixed: sys-botbase prints nothing in reply to a poke.
+The client waited for a line and timed out, which aborted the context manager
+before its restore path was armed, leaving the experimental value in memory.
+The write itself had already landed. Pokes are now sent without waiting for a
+reply, and a regression test asserts that no read is attempted.
+```

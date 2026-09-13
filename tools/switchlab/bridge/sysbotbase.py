@@ -205,12 +205,17 @@ class SysBotBase:
             raise BridgeError("connection closed by the Switch")
         return raw.decode("ascii", errors="replace").rstrip("\r\n")
 
+    # sys-botbase commands that write but print nothing. Waiting for a reply
+    # to one of these blocks until the socket times out.
+    _SILENT = ("configure ", "pokeAbsolute ", "pokeMain ", "poke ", "pointerPoke ")
+
     def _send(self, cmd: str) -> None:
-        """Send a command that produces no reply (only `configure`)."""
+        """Send a command that produces no reply."""
         if self._sock is None:
             raise BridgeError("not connected")
-        if not cmd.startswith("configure "):
-            raise BridgeError("_send is only for configure commands")
+        if not cmd.startswith(self._SILENT):
+            raise BridgeError(f"_send is only for commands with no reply: {self._SILENT}")
+        self._sock.settimeout(self.timeout)
         self._sock.sendall((cmd + "\r\n").encode("ascii"))
 
     def _command_lines(self, cmd: str, stop) -> list:
@@ -432,6 +437,21 @@ class SysBotBase:
                 return False
 
         return _Paused()
+
+    # -- memory writes ------------------------------------------------------
+    # These are raw primitives. Policy (explicit apply, original capture,
+    # read-back, restore) lives in switchlab.guard; call that, not these.
+    def poke_absolute(self, address: int, data: bytes) -> None:
+        if not data:
+            raise BridgeError("nothing to write")
+        # parseStringToByteBuffer only treats the argument as hex when it
+        # starts with "0x"; without the prefix it parses each pair as decimal.
+        self._send(f"pokeAbsolute 0x{address:X} 0x{data.hex().upper()}")
+
+    def poke_main(self, offset: int, data: bytes) -> None:
+        if not data:
+            raise BridgeError("nothing to write")
+        self._send(f"pokeMain 0x{offset:X} 0x{data.hex().upper()}")
 
     # -- SD card files (lab2 build) -----------------------------------------
     def fs_list(self, path: str) -> list:

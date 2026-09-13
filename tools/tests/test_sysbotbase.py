@@ -115,11 +115,29 @@ def test_screenshot_rejects_non_jpeg():
         client.screenshot()
 
 
-def test_module_has_no_write_commands():
+def test_module_has_no_input_or_freeze_commands():
+    """Writes are allowed through guard.py, but the client must never send
+    controller input or set up freezes behind the user's back."""
     src = Path(SysBotBase.__module__.replace(".", "/"))
     text = (Path("tools") / src.with_suffix(".py")).read_text()
-    for banned in ("poke", "freeze", "click", "press", "setStick", "touch"):
-        assert f'"{banned}' not in text, f"write/input command {banned!r} found in read-only client"
+    for banned in ("freeze", "click", "press", "setStick", "touch", "clickSeq"):
+        assert f'"{banned}' not in text, f"input/freeze command {banned!r} found in the client"
+
+
+def test_poke_absolute_sends_little_endian_hex_and_never_reads():
+    # No scripted reply: if poke tried to read one, FakeReader would raise.
+    # sys-botbase prints nothing for a poke, so waiting would hang until the
+    # socket timed out, and the write would already have landed.
+    client = make_client({})
+    client.poke_absolute(0x5567E6C2E0, (25).to_bytes(4, "little"))
+    # The 0x prefix matters: without it the sysmodule parses each pair as decimal.
+    assert client._sock.sent[-1] == b"pokeAbsolute 0x5567E6C2E0 0x19000000\r\n"
+
+
+def test_send_rejects_commands_that_do_reply():
+    client = make_client({})
+    with pytest.raises(BridgeError):
+        client._send("getVersion")
 
 
 class QueueReader:
