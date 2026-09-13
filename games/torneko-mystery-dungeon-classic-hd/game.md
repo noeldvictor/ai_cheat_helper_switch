@@ -19,8 +19,8 @@ Status: confirmed first game (2026-09-13)
 
 ## Tool state
 
-- Atmosphère version: unknown
-- Switch system firmware version: unknown
+- Atmosphère version: 1.11 (user-reported 2026-09-13)
+- Switch system firmware version: 22.1 (user-reported 2026-09-13)
 - EdiZon-SE version: installed, version not reported
 - Breeze version: installed, version not reported
 - Ultrahand / EdiZon overlay: installed for cheat toggling

@@ -15,8 +15,8 @@ Last updated: 2026-09-13
   Atmosphère with homebrew working (confirmed 2026-09-13).
 - Nintendo Switch emulator on Windows: available, not the first platform.
 - First research platform: physical Switch.
-- Physical Switch Atmosphère version: unknown.
-- Physical Switch system firmware version: unknown.
+- Physical Switch Atmosphère version: 1.11 (user-reported 2026-09-13; patch level not yet confirmed).
+- Physical Switch system firmware version: 22.1 (user-reported 2026-09-13).
 
 ## Tools and connection
 
@@ -90,8 +90,8 @@ falsifiable target at a time.
 
 ## Information needed next
 
-1. Atmosphère version and system firmware version (shown in the Atmosphère
-   boot splash or in Hekate / the homebrew menu).
+1. Done 2026-09-13: Atmosphère 1.11, firmware 22.1 (patch levels to confirm from the
+   System Settings version line).
 2. Whether an FTP server (sys-ftpd, ftpd) is installed on the Switch.
 3. Decision on the research bridge (see `docs/design.md`).
 4. The Switch's local IP address, shared in chat only, when a session starts.
