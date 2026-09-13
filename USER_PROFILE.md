@@ -26,11 +26,14 @@ Already on the Switch (confirmed 2026-09-13):
 - Breeze (homebrew app), version unknown.
 - Ultrahand and/or the EdiZon overlay, used to toggle cheats in-game.
 
-Not yet on the Switch:
+Installed during this project on 2026-09-13:
 
-- sys-botbase v2.5: installed 2026-09-13 and verified. It answers
-  `getVersion` with `2.5` on TCP port 6000 from the Linux helper machine.
-- FTP server (sys-ftpd or ftpd): unknown. Needed for Wi-Fi deployment.
+- `sys-botbase-lab`, the repository's fork of sys-botbase, on TCP port 6000.
+  Version 2.5-lab2 is running; 2.5-lab3 is uploaded and takes effect at the
+  next reboot. Source and recovery binaries are in `switch/sys-botbase-lab/`.
+- Upstream sys-botbase v2.5 is kept on the card as `exefs.nsp.orig`.
+- ftpd v3.2.1 at `/switch/ftpd/ftpd.nro`, kept as a fallback. It is no longer
+  needed for transfers, because the fork moves files itself.
 
 PC side:
 
@@ -102,25 +105,31 @@ proves the search pipeline before any code patching starts.
   value/bytes, touch only one confirmed candidate, resume in a `finally` path,
   verify with a second read, and offer immediate restoration.
 - Do not bulk-write all candidates or automatically test several cheats.
-- Deployment: FTP over Wi-Fi after the user confirms; back up any existing
-  cheat file first. The user then toggles cheats with Ultrahand or EdiZon as
-  they do today.
+- Deployment: the bridge writes to the SD card directly over Wi-Fi after the
+  user confirms; back up any existing cheat file first. The user then toggles
+  cheats with Ultrahand or EdiZon as they do today.
 
 ## Session facts learned 2026-09-13
 
 - The user is present during sessions and wants questions only when the tool
   cannot find the answer itself.
 - Opening Ultrahand on a game blocks the bridge until the game is closed.
-- No FTP server is on the Switch (ports 5000, 21, 2121 closed). Cheat files
-  go to the card by card reader until one is installed.
-- Reads run at about 0.7 MB/s; Kowloon's scan set is about 700 MiB.
+- The Homebrew Menu netloader accepts one connection and expects the transfer
+  immediately. Probing its port with a bare connect kills it. That mistake cost
+  one attempt before ftpd was installed.
+- Reads run at about 5 MB/s on the fork, against 0.7 MB/s on upstream, because
+  the fork sends binary instead of hex. Kowloon's scan set is about 787 MiB.
+- Small values cannot be searched directly. AP at 84 and level at 1 both hit
+  the 200000 candidate cap, while HP at 100 gave 3299 and reserve ammo at 150
+  gave 8062.
 
 ## Information needed next
 
 1. Done 2026-09-13: Atmosphère 1.11, firmware 22.1 (patch levels to confirm from the
    System Settings version line).
-2. Done 2026-09-13: no FTP server present; install ftpd later for Wi-Fi deploy.
-3. Done 2026-09-13: research bridge is sys-botbase v2.5, installed and answering.
+2. Done 2026-09-13: ftpd v3.2.1 installed, then superseded by the fork's own
+   file transfer commands.
+3. Done 2026-09-13: research bridge is the repository's sys-botbase fork.
 4. The Switch's local IP address, shared in chat only, when a session starts.
 5. Done 2026-09-13 for Kowloon High-School Chronicle: version, Title ID, and
    Build ID read from the running game.
