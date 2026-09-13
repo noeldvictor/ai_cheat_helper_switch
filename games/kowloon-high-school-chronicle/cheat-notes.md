@@ -44,7 +44,7 @@ known field, then read the neighbouring values.
 | Max Stats | not started | none | open the status screen and read each stat |
 | God Mode (damage patch) | not started | none | needs the current-HP address first |
 | Infinite Ammo (magazine) | confirmed | heap, this launch only | find a stable form across a relaunch |
-| Max Reserve Ammo | searching | none | session `ammo-reserve`, 8070 candidates |
+| Max Reserve Ammo | searching | none | session `reserve-u16`, 86568 candidates; needs another reload |
 | Walk/Run Speed x2 | not started | none | look for a float near the player structure |
 | EXP x2, x4, x8, x16 | not started | none | needs the EXP-add instruction |
 | EXP x100 | not started | none | same patch site, multiply instead of shift |
@@ -169,11 +169,20 @@ of work as god mode.
 ### Max Reserve Ammo
 
 - Stage: searching
-- Session: `ammo-reserve`, u32, started from value 150, 8070 candidates
-- Notes: 150 is a more distinctive value than 30, so this session should narrow
-  faster and may point at the weapon structure, which would give the magazine
-  address as a nearby field.
-- Next step: user fires and reloads so the reserve drops, then narrow.
+- Session: `reserve-u16`, u16, started from value 120, 86568 candidates
+- Abandoned session: `ammo-reserve`, u32, started from 150 with 8070
+  candidates. After a reload took the reserve from 150 to 120, none of those
+  candidates held 120, so the field is not a 4-byte value on a 4-byte
+  boundary. A u32 scan steps four bytes and cannot see a u16 at a 2-aligned
+  offset. The magazine was found as u32 only because it happens to be aligned.
+- Observed behaviour: one reload took the reserve from 150 to 120, a drop of
+  30, which matches the magazine capacity. The magazine read 16/30 both before
+  and after, so the reload appears to take a full magazine from reserve.
+- Window search: 39 u16 matches for 120 within 256 KiB of the magazine field,
+  and only 2 as u32, both far away. Too many to pick out without another
+  change.
+- Next step: user fires and reloads again so the reserve drops below 120, then
+  narrow `reserve-u16` by the new exact value.
 
 ## Walk/Run Speed x2
 

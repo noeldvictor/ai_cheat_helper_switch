@@ -266,6 +266,15 @@ Match the effect to the smallest technique that achieves it.
 - **A number the player sees** (money, item counts). Search for the value, then
   write it. Lock it only if the game recalculates it.
 
+Width and alignment decide what a search can see. A scan for a 4-byte value
+steps 4 bytes at a time, so a 2-byte field that does not sit on a 4-byte
+boundary is invisible to it, and so is a 4-byte value written at an odd offset.
+If a narrowed candidate set collapses to zero after the player changes the
+value, suspect the width before suspecting the address: re-search the current
+value at the other widths rather than assuming the field moved. Confirm the
+width on the first field found in a structure, because games mix widths within
+one record.
+
 The health and stat family is four separate cheats. Do not merge them, and do
 not describe one as another. Each makes a different promise to the player.
 
