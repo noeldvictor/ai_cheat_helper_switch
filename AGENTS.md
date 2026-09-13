@@ -39,7 +39,8 @@ version-sensitive decision affects the project.
 
 ## Bridge and session rules (learned 2026-09-13)
 
-The PC reads the game through the sys-botbase sysmodule (`tools/switchlab`).
+The PC reads the game through `sys-botbase-lab`, this repository's fork of
+sys-botbase (source in `switch/sys-botbase-lab/`, client in `tools/switchlab`).
 These rules come from real failures; follow them before any memory work.
 
 - Only one debugger can hold the game. Atmosphère's cheat manager attaches
@@ -54,14 +55,18 @@ These rules come from real failures; follow them before any memory work.
   either. Snapshots are not atomic. Ask the user to stand still during a
   snapshot and confirm the visible value before and after.
 - The kernel heap region can be completely unmapped for a game. Never assume
-  `getHeapBase` points at data. Run `switchlab regions`, which follows
-  pointers from the main module two levels deep to find the real data blocks.
+  `getHeapBase` points at data. Run `switchlab regions`, which asks the kernel
+  for every mapped region on the fork and falls back to pointer harvesting on
+  the upstream build.
 - Mapped regions contain holes. Read with the hole-tolerant snapshot reader;
   never assume a region reads end to end.
-- Reads run at roughly 0.7 MB/s over Wi-Fi. Take one full snapshot, then
-  rescan only candidate addresses. Tell the user how long a snapshot will take.
+- Reads run at roughly 5 MB/s on the fork, which sends binary, and 0.7 MB/s on
+  upstream, which sends hex. Prefer the on-device search over pulling memory to
+  the PC, and tell the user how long a snapshot will take.
 - `peekMulti` aborts on the first unreadable address, so it cannot sweep for
   regions; use it only on addresses already known to be mapped.
+- A poke produces no reply. Never wait for one: the socket blocks until it
+  times out, and by then the write has already landed with no cleanup armed.
 - Screenshots go to `local/screens/` (ignored). Copy chosen frames into
   `games/<slug>/evidence/` only after checking they show no account or
   console identifiers.
