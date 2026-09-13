@@ -24,7 +24,7 @@ Status: confirmed first game (2026-09-13)
 - EdiZon-SE version: installed, version not reported
 - Breeze version: installed, version not reported
 - Ultrahand / EdiZon overlay: installed for cheat toggling
-- sys-botbase: not installed (proposed research bridge)
+- sys-botbase v2.5: installed and verified 2026-09-13 (answers on port 6000)
 - FTP server: unknown
 - Connection method: local Wi-Fi
 
@@ -58,7 +58,7 @@ Proposed discovery queue (one experimental target at a time):
 ## Required next evidence
 
 - Atmosphère and firmware versions.
-- Bridge installed and reachable from the PC.
+- Done 2026-09-13: bridge installed and reachable from the PC.
 - Game launched offline; Title ID, Build ID, and game version read from the
   running copy.
 - Visible gold value at the start of the first scan.

@@ -104,7 +104,8 @@ immediately before installing or updating software.
   enumeration command exists.
 - Release notes do not state Atmosphère or firmware requirements.
 - Compatibility check for the user's firmware 22.1 / Atmosphère 1.11
-  (2026-09-13): unconfirmed by the maintainer. Open issues #105, #106, #107
+  (2026-09-13): confirmed working on the user's console the same day
+  (boots, answers `getVersion` = `2.5`). Maintainer had not stated it. Open issues #105, #106, #107
   ask for firmware 22 support with no maintainer reply; #105 was traced to
   an outdated Hekate/Nyx, not to sys-botbase. `v2.5` was built 2026-05-24,
   after firmware 22.0.0 shipped, and its ten commits since `v2.41` are

@@ -154,7 +154,7 @@ Git.
 
 ## Open decisions
 
-- Bridge choice (recommended: sys-botbase first).
-- Atmosphère and firmware versions, to confirm sys-botbase compatibility.
+- Bridge choice: decided 2026-09-13, sys-botbase v2.5 installed and verified.
+- Atmosphère 1.11 and firmware 22.1 reported; sys-botbase v2.5 boots and answers on them.
 - Whether an FTP server is already on the Switch.
 - First target (recommended: gold).

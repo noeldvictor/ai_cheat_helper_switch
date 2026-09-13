@@ -28,7 +28,8 @@ Already on the Switch (confirmed 2026-09-13):
 
 Not yet on the Switch:
 
-- sys-botbase: not installed. Proposed research bridge; decision pending.
+- sys-botbase v2.5: installed 2026-09-13 and verified. It answers
+  `getVersion` with `2.5` on TCP port 6000 from the Linux helper machine.
 - FTP server (sys-ftpd or ftpd): unknown. Needed for Wi-Fi deployment.
 
 PC side:
@@ -93,6 +94,6 @@ falsifiable target at a time.
 1. Done 2026-09-13: Atmosphère 1.11, firmware 22.1 (patch levels to confirm from the
    System Settings version line).
 2. Whether an FTP server (sys-ftpd, ftpd) is installed on the Switch.
-3. Decision on the research bridge (see `docs/design.md`).
+3. Done 2026-09-13: research bridge is sys-botbase v2.5, installed and answering.
 4. The Switch's local IP address, shared in chat only, when a session starts.
 5. Later: game version, Title ID, and Build ID read from the running game.
