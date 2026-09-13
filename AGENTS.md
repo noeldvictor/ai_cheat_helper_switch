@@ -259,6 +259,34 @@ The usual Atmosphère destination has historically been:
 Verify that path against the installed Atmosphère/tool version before telling
 the user to deploy it.
 
+### 6a. Techniques by effect
+
+Match the effect to the smallest technique that achieves it.
+
+- **A number the player sees** (money, stats, item counts). Search for the
+  value, then write it. Lock it only if the game recalculates it.
+- **A value that must not drop** (god mode by HP lock). Write the maximum every
+  frame with the cheat VM. The game still applies damage, so this is not true
+  invulnerability and will not stop effects that bypass HP.
+- **True invulnerability**. Find the instruction that subtracts damage and
+  patch it. Record the original instruction and provide an OFF code.
+- **A multiplier on something gained** (EXP, money per kill). This cannot be
+  done by writing a value, because the target is the amount added, not a stored
+  total. Patch the instruction at the point of the addition. Powers of two are a
+  single left shift, so x2, x4, x8 and x16 differ only in the shift amount.
+  Other factors need a multiply instruction and a spare register. The cheat VM
+  does support multiplication (code types 0x7 and 0x9), so a fallback is to
+  track the previous total in a register, multiply the per-frame change, and add
+  the difference back. That fallback is fragile; prefer the patch.
+- **Movement speed**. Usually a float, either a stored value or a constant in
+  code. Try the value first.
+- **Game speed or fast forward**. Only possible if the game keeps a delta-time
+  value, a frame limit, or a speed multiplier. There is no general speed control
+  on the Switch. Confirm such a value exists before promising the effect.
+
+Give each variant its own named entry in the cheat file. Five EXP multipliers
+are five entries, and only one may be enabled at a time.
+
 ### 7. Deploy conservatively
 
 Keep the generated file in

@@ -59,14 +59,25 @@ The user wants a flexible system: they describe a cheat in plain language
 
 Cheat kinds the system should support (all chosen by the user):
 
-1. Set a value (gold, level, stats) through a relaunch-stable pointer chain.
-2. Lock a value (infinite HP, no hunger) with the Atmosphère cheat VM.
-3. Code patches (one-hit kill, no random encounters, speed) via ARM64
-   instruction patches for the exact Build ID.
+1. Set a value (money, level, stats) through a relaunch-stable pointer chain.
+2. Lock a value (infinite HP) with the Atmosphère cheat VM.
+3. Code patches (god mode, EXP multipliers, speed) via ARM64 instruction
+   patches for the exact Build ID.
 4. Item and inventory edits.
 
-The first target will be a visible integer in Kowloon High-School Chronicle
-that changes naturally. Work on one falsifiable target at a time.
+Specific cheats requested on 2026-09-13, in the agreed order of work:
+
+1. Max money
+2. Max attack
+3. God mode
+4. Double walk and run speed
+5. EXP multipliers at x2, x4, x8, x16
+6. EXP multiplier at x100
+7. Fast forward, if the game has a speed or delta-time value to change
+
+The per-game breakdown, with the technique and difficulty for each, is in the
+game card. Work on one falsifiable target at a time. Money is first because it
+proves the search pipeline before any code patching starts.
 
 ## Assistance preference
 

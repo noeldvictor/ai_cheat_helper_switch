@@ -6,7 +6,10 @@ Load them every session:
 @AGENTS.md
 
 Current platform facts and preferences are in `USER_PROFILE.md`. The planned
-helper architecture and open decisions are in `docs/design.md`.
+helper architecture and open decisions are in `docs/design.md`. The list of
+cheats the user wants, with the technique and difficulty for each, is in the
+active game's card under `games/`. `AGENTS.md` section 6a explains which
+technique fits which kind of effect.
 
 ## Writing style
 

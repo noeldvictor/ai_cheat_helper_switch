@@ -12,15 +12,35 @@ cheat with Ultrahand or EdiZon exactly as before.
 ## Current status (2026-09-13)
 
 - Physical first-generation Switch, Atmosphère 1.11, firmware 22.1.
-- Research bridge: sys-botbase v2.5 installed on the Switch and verified from
-  the Linux PC (`tools/switchlab`).
+- Research bridge: `sys-botbase-lab`, a fork of sys-botbase kept in
+  `switch/sys-botbase-lab/`. It adds on-device value search, kernel region
+  listing, binary reads, pause and resume, and SD card file transfer. The PC
+  side is `tools/switchlab`.
 - Working today: game identity (Title ID, Build ID, version), screenshots the
-  AI can read, attach diagnosis, discovery of mapped memory regions, and
-  hole-tolerant memory snapshots. All read-only.
-- Not yet built: value scan and narrowing, guarded test writes, cheat-file
-  generation and lint, FTP deploy, pointer search.
+  AI can read, attach diagnosis, mapped region listing, hole-tolerant memory
+  snapshots, candidate scan sessions, and file transfer to and from the card.
+- Not yet built: guarded test writes, cheat-file generation and lint, pointer
+  search, instruction patching.
 - Active game: Kowloon High-School Chronicle (`games/kowloon-high-school-chronicle/`).
   Legend of Mana and Torneko's Mystery Dungeon are deferred.
+
+## Cheats being built
+
+In this order, for the active game. The game card holds the technique and
+difficulty for each, and the research log holds the evidence.
+
+1. Max money
+2. Max attack
+3. God mode
+4. Double walk and run speed
+5. EXP multipliers at x2, x4, x8 and x16
+6. EXP multiplier at x100
+7. Fast forward, if the game has a speed value that can be changed
+
+The first four are value edits and locks. The EXP multipliers need the
+instruction that adds EXP to be found and patched, because the target is the
+amount added per kill rather than a stored total. Fast forward depends on the
+game keeping a delta-time or frame-limit value, which is not yet known.
 
 ## Scope
 
