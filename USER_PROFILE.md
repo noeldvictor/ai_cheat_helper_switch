@@ -1,6 +1,6 @@
 # User Profile
 
-Last updated: 2026-07-28
+Last updated: 2026-09-13
 
 ## Confirmed boundaries
 
@@ -11,73 +11,88 @@ Last updated: 2026-07-28
 
 ## Available platforms
 
-- Physical Nintendo Switch: available.
-- Nintendo Switch emulator on Windows: available.
-- Preferred platform for the first RAM-search session: unknown.
+- Physical Nintendo Switch (first-generation): available, already running
+  Atmosphère with homebrew working (confirmed 2026-09-13).
+- Nintendo Switch emulator on Windows: available, not the first platform.
+- First research platform: physical Switch.
 - Physical Switch Atmosphère version: unknown.
-- Physical Switch homebrew status: unknown.
-- Emulator name and version: unknown.
+- Physical Switch system firmware version: unknown.
 
 ## Tools and connection
 
-- Installed memory-search tools and versions: unknown.
-- The user is willing to install the appropriate tools.
-- Physical Switch connection method: unknown.
-- Do not select or install a tool until its current compatibility has been
-  checked against the user's Atmosphère, firmware, or emulator version.
+Already on the Switch (confirmed 2026-09-13):
+
+- EdiZon-SE (homebrew app), version unknown.
+- Breeze (homebrew app), version unknown.
+- Ultrahand and/or the EdiZon overlay, used to toggle cheats in-game.
+
+Not yet on the Switch:
+
+- sys-botbase: not installed. Proposed research bridge; decision pending.
+- FTP server (sys-ftpd or ftpd): unknown. Needed for Wi-Fi deployment.
+
+PC side:
+
+- The helper app runs on the Linux machine where Claude Code runs.
+- PC and Switch talk over local Wi-Fi. The Switch IP address is used
+  ephemerally and never committed.
+- Do not install a tool until its current compatibility has been checked
+  against the user's Atmosphère and firmware versions.
 
 ## First game
 
-- User-entered name: `Legend of Manga`.
-- Likely intended name: `Legend of Mana` for Nintendo Switch.
-- Exact title confirmation: pending.
+- Name: Dragon Quest Heroes: Torneko's Mystery Dungeon -Classic HD-
+- Edition: Nintendo Switch (first-generation) version, confirmed by the user.
+- Released 2026-09-09 (Square Enix). Also exists on Switch 2, PS5, Xbox, and
+  Steam; those editions are out of scope.
 - Game version: unknown.
 - Title ID: unknown.
 - Build ID: unknown.
+- Previous candidate `Legend of Mana` is deferred, not abandoned.
 
 Do not copy a Title ID or Build ID from a website and assume it matches the
 installed game. Read both from the user's running copy or installed tool.
 
 ## Desired results
 
-The user wants a broad set of useful offline single-player effects ("all the
-good stuff"). Work on one falsifiable target at a time. Proposed order:
+The user wants a flexible system: they describe a cheat in plain language
+("I need a cheat that does X, Y, Z") and the AI drives the discovery loop.
 
-1. Lucre/money, because it is a visible numeric value suitable for validating
-   the automated scanner.
-2. A visible consumable or material quantity.
-3. Player current/max HP.
-4. Experience or level progression.
-5. Battle gauges or cooldowns.
-6. Damage, one-hit-kill, movement, or other code-driven effects only after the
-   read/search/write pipeline is proven safe.
+Cheat kinds the system should support (all chosen by the user):
 
-This order is provisional. The first exact target and its visible starting value
-still require user confirmation.
+1. Set a value (gold, level, stats) through a relaunch-stable pointer chain.
+2. Lock a value (infinite HP, no hunger) with the Atmosphère cheat VM.
+3. Code patches (one-hit kill, no random encounters, speed) via ARM64
+   instruction patches for the exact Build ID.
+4. Item and inventory edits.
+
+The first target value is undecided. Gold is the recommended first target
+because it is a visible integer that changes naturally. Work on one
+falsifiable target at a time.
 
 ## Assistance preference
 
-- Preferred style: maximum practical automation.
-- Build PC helper scripts for repeated RAM reads, exact-value scans,
-  changed/unchanged snapshot comparisons, candidate narrowing, experiment
-  logging, and reversible validation.
+- Experience level: beginner in memory research. Prefers short multiple-choice
+  questions, concrete examples, and plain-language explanations. Abstract
+  workflow descriptions did not land; explain by walking through one cheat.
+- Preferred style: maximum practical automation. The AI runs scans and
+  comparisons; the user performs natural in-game actions when asked.
+- The AI should read the visible value from a Switch screenshot when the
+  bridge supports it, and ask the user to confirm or correct it.
 - Default every helper to read-only or dry-run mode.
 - A memory write must require an explicit apply action, record the original
   value/bytes, touch only one confirmed candidate, resume in a `finally` path,
   verify with a second read, and offer immediate restoration.
 - Do not bulk-write all candidates or automatically test several cheats.
-- The user may still need to perform natural in-game actions such as spending
-  Lucre, taking damage, healing, or changing maps. Ask for the resulting visible
-  value before continuing the automated rescan.
+- Deployment: FTP over Wi-Fi after the user confirms; back up any existing
+  cheat file first. The user then toggles cheats with Ultrahand or EdiZon as
+  they do today.
 
 ## Information needed next
 
-1. Confirm whether the game is **Legend of Mana**.
-2. Choose the first platform:
-   - emulator for easier PC-side automation; or
-   - physical Switch for direct hardware discovery.
-3. If emulator: provide its name/version and confirm the game already launches.
-4. If physical Switch: provide the Atmosphère version, system firmware version,
-   and whether homebrew already launches.
-5. Open the game offline and provide the current visible Lucre value, or name a
-   different first target and its visible value.
+1. Atmosphère version and system firmware version (shown in the Atmosphère
+   boot splash or in Hekate / the homebrew menu).
+2. Whether an FTP server (sys-ftpd, ftpd) is installed on the Switch.
+3. Decision on the research bridge (see `docs/design.md`).
+4. The Switch's local IP address, shared in chat only, when a session starts.
+5. Later: game version, Title ID, and Build ID read from the running game.

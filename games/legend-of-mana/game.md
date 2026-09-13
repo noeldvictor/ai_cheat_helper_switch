@@ -1,6 +1,6 @@
 # Legend of Mana — Game Card
 
-Status: candidate title; user confirmation pending
+Status: deferred on 2026-09-13; the user chose Dragon Quest Heroes: Torneko's Mystery Dungeon -Classic HD- as the first game
 
 ## Baseline
 
