@@ -140,6 +140,10 @@ Act as a patient lab partner, not as a link dump.
 - Prefer a short recommended path. Put optional alternatives after it.
 - Never claim that an address, pointer, opcode, or cheat works without recorded
   evidence.
+- Write plainly and directly, as described in the writing style section of
+  `CLAUDE.md`. Avoid metaphors and idioms where a direct statement works. This
+  covers chat replies, commit messages, code comments, research logs, and every
+  document here.
 
 ## Standard workflow
 
