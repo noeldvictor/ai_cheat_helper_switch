@@ -240,14 +240,22 @@ class SysBotBase:
         return reply
 
     # -- memory reads ------------------------------------------------------
-    def _peek(self, verb: str, address: int, size: int) -> bytes:
+    def _peek_partial(self, verb: str, address: int, size: int) -> bytes:
+        """Read up to `size` bytes; a short result means the read hit an
+        unreadable page (sys-botbase sends the good prefix, then stops)."""
         if size <= 0:
             raise BridgeError("size must be positive")
         if address < 0:
             raise BridgeError("address must be non-negative")
         # Roughly 2 hex chars per byte over Wi-Fi; allow generous time.
         timeout = max(self.timeout, 5.0 + size / 200_000)
-        data = parse_hex_bytes(self.command(f"{verb} 0x{address:X} {size}", timeout=timeout))
+        return parse_hex_bytes(self.command(f"{verb} 0x{address:X} {size}", timeout=timeout))
+
+    def peek_absolute_partial(self, address: int, size: int) -> bytes:
+        return self._peek_partial("peekAbsolute", address, size)
+
+    def _peek(self, verb: str, address: int, size: int) -> bytes:
+        data = self._peek_partial(verb, address, size)
         if len(data) != size:
             raise BridgeError(
                 f"{verb} 0x{address:X} {size}: expected {size} bytes, got {len(data)} "

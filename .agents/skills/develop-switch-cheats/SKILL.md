@@ -23,6 +23,14 @@ Keep every experiment reversible:
 7. Restore failed or temporary tests.
 8. Never finish with a game paused or a debugger attached.
 
+## PC bridge track (this repository's default)
+
+The physical Switch runs sys-botbase; the PC runs `tools/switchlab`. Read
+`references/hardware-edizon.md` section "PC bridge with sys-botbase" before
+touching memory. Order of operations: full game relaunch with no overlay,
+`status`, `diagnose` (must report "can attach"), `regions`, screenshot to
+read the visible value, snapshot, scan, candidate-only rescans.
+
 ## Route the session
 
 Choose one track before suggesting tools or addresses:

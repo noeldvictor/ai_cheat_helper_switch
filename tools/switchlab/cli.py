@@ -8,6 +8,7 @@ import sys
 
 from switchlab.bridge.sysbotbase import BridgeError, SysBotBase, decode_result
 from switchlab.identity import read_identity
+from switchlab.regions import discover_regions, scan_regions
 from switchlab.screen import capture_screenshot
 
 
@@ -39,6 +40,17 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
         print(f"{name:26} {rc} = {decode_result(rc)}")
     print(f"verdict: {report['verdict']}")
     return 0 if report["attached"] else 1
+
+
+def cmd_regions(args: argparse.Namespace) -> int:
+    with SysBotBase(_host(args), args.port, timeout=120) as client:
+        regions = discover_regions(client, max_probes=args.max_probes, depth=args.depth)
+    print("mapped regions:")
+    for r in regions:
+        print("  " + r.describe())
+    scan = scan_regions(regions)
+    print(f"scan set: {sum(r.size for r in scan) / 1024**2:.1f} MiB in {len(scan)} data blocks")
+    return 0
 
 
 def cmd_screenshot(args: argparse.Namespace) -> int:
@@ -76,6 +88,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("diagnose", help="explain why memory reads fail (kernel result codes)")
     s.set_defaults(func=cmd_diagnose)
+
+    s = sub.add_parser("regions", help="discover mapped data regions by following pointers from the main module")
+    s.add_argument("--max-probes", type=int, default=60)
+    s.add_argument("--depth", type=int, default=2, help="pointer-following levels (1 = main module only)")
+    s.set_defaults(func=cmd_regions)
 
     s = sub.add_parser("screenshot", help="save the current screen to local/screens/")
     s.add_argument("--label", default="screen")

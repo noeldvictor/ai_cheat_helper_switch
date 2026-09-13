@@ -60,3 +60,24 @@ For MAIN-relative data, record the base relationship, offset, width, and expecte
 original. Recheck after relaunch. For ASM, disassemble the exact BID, record the
 original ARM64 instruction and affected registers, explain the gameplay effect,
 provide a verified OFF code, and test one instruction at a time.
+
+## PC bridge with sys-botbase
+
+Verified 2026-09-13 on Atmosphère 1.11 / firmware 22.1 with sys-botbase v2.5.
+
+- The sysmodule opens a kernel debug session around every command. Only one
+  debugger may hold the game, so any cheat file for the running Build ID, or
+  any cheat overlay opened on the game, blocks the bridge with kernel `Busy`
+  (0xF401) until the game is fully closed. Fix: close and relaunch, no
+  overlay, then `switchlab diagnose`.
+- Attaching does not pause the game. There is no pause command. The user
+  stands still during snapshots; confirm the visible value before and after.
+- `getHeapBase` may point at an unmapped kernel heap region. Use
+  `switchlab regions` (pointer harvesting from the main module, two levels)
+  to find the real data blocks, then snapshot with the hole-tolerant reader.
+- Expect about 0.7 MB/s. Snapshot once, then rescan candidates only.
+- `peekMulti` aborts on the first unreadable address; use it only on known
+  candidates.
+- To test a finished cheat file, the file must be on the card at launch, which
+  attaches the cheat manager. Research and cheat testing therefore happen in
+  separate launches of the game.

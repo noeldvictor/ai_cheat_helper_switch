@@ -37,6 +37,40 @@ current primary project documentation. Prefer, in order:
 Record the URL, release/tag, and verification date in `docs/sources.md` when a
 version-sensitive decision affects the project.
 
+## Bridge and session rules (learned 2026-09-13)
+
+The PC reads the game through the sys-botbase sysmodule (`tools/switchlab`).
+These rules come from real failures; follow them before any memory work.
+
+- Only one debugger can hold the game. Atmosphère's cheat manager attaches
+  when a cheat file exists for the running Build ID, and EdiZon-SE, Breeze,
+  Ultrahand, or the EdiZon overlay attach the moment they are opened on the
+  game. From then on the bridge gets kernel result `0xF401` (Busy) until the
+  game is fully closed. Start every research session with a full close and
+  relaunch, no overlay, and run `switchlab diagnose` before anything else.
+- Identity reads (`status`) work even when the bridge cannot attach; only
+  memory reads fail. A heap base below `0x1000` means attach failed.
+- sys-botbase does not pause the game, and attaching does not pause it
+  either. Snapshots are not atomic. Ask the user to stand still during a
+  snapshot and confirm the visible value before and after.
+- The kernel heap region can be completely unmapped for a game. Never assume
+  `getHeapBase` points at data. Run `switchlab regions`, which follows
+  pointers from the main module two levels deep to find the real data blocks.
+- Mapped regions contain holes. Read with the hole-tolerant snapshot reader;
+  never assume a region reads end to end.
+- Reads run at roughly 0.7 MB/s over Wi-Fi. Take one full snapshot, then
+  rescan only candidate addresses. Tell the user how long a snapshot will take.
+- `peekMulti` aborts on the first unreadable address, so it cannot sweep for
+  regions; use it only on addresses already known to be mapped.
+- Screenshots go to `local/screens/` (ignored). Copy chosen frames into
+  `games/<slug>/evidence/` only after checking they show no account or
+  console identifiers.
+- The Switch IP is passed on the command line or in `SWITCH_HOST`; it never
+  appears in a committed file.
+- Cheat files are stored in `games/<slug>/cheats/<BUILD_ID>.txt`, copy-paste
+  ready, with a comment header stating game, version, Title ID, Build ID,
+  and verified versus experimental status per cheat.
+
 ## Non-negotiable boundaries
 
 - Work only with games the user legally owns.
@@ -302,7 +336,7 @@ games/
 tools/
 ```
 
-- Use PowerShell-compatible commands by default on this Windows workspace.
+- The helper runs on the Linux machine that hosts Claude Code. Use bash.
 - Inspect existing files and Git status before editing.
 - Preserve user notes and unrelated changes.
 - Make small, reviewable edits.
@@ -313,7 +347,9 @@ tools/
   `git diff --check`. Never commit keys, saves, RAM dumps, credentials, console
   identifiers, generated caches, or known-broken code.
 - Use short, descriptive commit subjects. Do not amend, squash, rewrite history,
-  push, publish, or open a pull request unless the user explicitly asks.
+  publish, or open a pull request unless the user explicitly asks. Push when
+  the user asks ("git commit push"); the remote is SSH and the repo-local
+  author identity is already configured.
 - Do not copy files to a connected device unless the user explicitly asks.
 - Helper scripts must default to read-only or dry-run behavior. Any memory write
   or device copy must require an explicit apply flag, print the exact target,

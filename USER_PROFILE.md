@@ -86,11 +86,20 @@ that changes naturally. Work on one falsifiable target at a time.
   cheat file first. The user then toggles cheats with Ultrahand or EdiZon as
   they do today.
 
+## Session facts learned 2026-09-13
+
+- The user is present during sessions and wants questions only when the tool
+  cannot find the answer itself.
+- Opening Ultrahand on a game blocks the bridge until the game is closed.
+- No FTP server is on the Switch (ports 5000, 21, 2121 closed). Cheat files
+  go to the card by card reader until one is installed.
+- Reads run at about 0.7 MB/s; Kowloon's scan set is about 700 MiB.
+
 ## Information needed next
 
 1. Done 2026-09-13: Atmosphère 1.11, firmware 22.1 (patch levels to confirm from the
    System Settings version line).
-2. Whether an FTP server (sys-ftpd, ftpd) is installed on the Switch.
+2. Done 2026-09-13: no FTP server present; install ftpd later for Wi-Fi deploy.
 3. Done 2026-09-13: research bridge is sys-botbase v2.5, installed and answering.
 4. The Switch's local IP address, shared in chat only, when a session starts.
 5. Done 2026-09-13 for Kowloon High-School Chronicle: version, Title ID, and

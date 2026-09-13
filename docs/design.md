@@ -141,12 +141,41 @@ cleanup path, no freeze during research unless the user asks, no writes to
 the SD card without confirmation, no keys, dumps, saves, or IP addresses in
 Git.
 
+## Lessons learned 2026-09-13 (first live session)
+
+1. Attach exclusivity is real and easy to trip. One Ultrahand click on the
+   game produced kernel `Busy` (0xF401) on every read until the game was
+   fully closed. `switchlab diagnose` now decodes this. Identity commands
+   still work in that state, which is misleading; the heap base reads as a
+   junk value such as 4.
+2. Attaching does not pause the game. Noexes implements pause as a separate
+   `svcBreakDebugProcess`; sys-botbase never calls it. Snapshots are not
+   atomic; the user stands still and the visible value is confirmed by
+   screenshot before and after.
+3. The kernel heap region was entirely unmapped for Kowloon. The data lives
+   in blocks elsewhere in the 39-bit space. `switchlab regions` finds them by
+   harvesting pointer-like values from the main module's data and bss,
+   probing where they lead, and measuring extents by binary search. One level
+   found 18 MiB; two levels found the 598 MiB main heap.
+4. Regions have holes. A straight read of an 18 MiB block stopped at 11.4
+   MiB. The snapshot reader keeps the good prefix, splits the rest down to
+   page size, and skips unmapped pages.
+5. Throughput is about 0.7 MB/s (4 MiB in 6.1 s). Kowloon's scan set is
+   about 700 MiB, so a full snapshot takes roughly 17 minutes. The plan is one
+   full snapshot, then candidate-only rescans, which take seconds.
+6. `peekMulti` aborts on the first unreadable address, so it is useless for
+   sweeping and only safe on known-mapped candidates.
+7. No FTP server is present, so card writes need a card reader until ftpd is
+   installed.
+8. Legend of Mana crashed at launch with sys-botbase installed. Untested
+   whether the two are related; capture the crash type before retrying.
+
 ## Milestones
 
-1. Bridge client + identity + screenshot, read-only, tested against the real
-   Switch.
-2. Snapshot + scan + narrowing with the live game (first target chosen from
-   what is visible on screen).
+1. Done 2026-09-13: bridge client, identity, screenshot, diagnose, region
+   discovery, hole-tolerant snapshots. Read-only, tested live.
+2. In progress: value scan + candidate narrowing with the live game (first
+   target chosen from what is visible on screen; AP 84 in Kowloon).
 3. Guarded single-candidate test write and restore.
 4. Cheat-file generation, opcode lint, FTP deploy with backup.
 5. Relaunch validation and pointer search.
