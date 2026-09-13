@@ -73,3 +73,37 @@ def test_read_and_write_int_roundtrip():
     c = FakeMem({0x2000: 0})
     write_int(c, 0x2000, 2, 513)
     assert read_int(c, 0x2000, 2) == 513
+
+
+def test_write_from_session_refuses_while_several_candidates_remain():
+    from switchlab.guard import AmbiguousTarget, write_from_session
+    from switchlab.scan import ScanSession
+
+    c = FakeMem({0x1000: 60, 0x1006: 60})
+    s = ScanSession("reserve", "BID", 2, [0x1000, 0x1006], {0x1000: 60, 0x1006: 60})
+    with pytest.raises(AmbiguousTarget):
+        write_from_session(c, s, 77, apply=True, log=lambda *_: None)
+    assert c.writes == []
+
+
+def test_write_from_session_writes_when_exactly_one_remains():
+    from switchlab.guard import write_from_session
+    from switchlab.scan import ScanSession
+
+    c = FakeMem({0x1000: 60})
+    s = ScanSession("reserve", "BID", 2, [0x1000], {0x1000: 60})
+    r = write_from_session(c, s, 77, apply=True, log=lambda *_: None)
+    assert r.ok and r.restored
+    assert [v for _, v in c.writes] == [77, 60]
+
+
+def test_write_from_session_fails_closed_when_the_value_moved():
+    from switchlab.bridge.sysbotbase import BridgeError
+    from switchlab.guard import write_from_session
+    from switchlab.scan import ScanSession
+
+    c = FakeMem({0x1000: 99})           # the game changed it since the last read
+    s = ScanSession("reserve", "BID", 2, [0x1000], {0x1000: 60})
+    with pytest.raises(BridgeError):
+        write_from_session(c, s, 77, apply=True, log=lambda *_: None)
+    assert c.writes == []

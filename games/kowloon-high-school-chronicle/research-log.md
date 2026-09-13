@@ -145,3 +145,47 @@ before its restore path was armed, leaving the experimental value in memory.
 The write itself had already landed. Pokes are now sent without waiting for a
 reply, and a regression test asserts that no read is attempted.
 ```
+
+## 2026-09-13 15:58 — game crashed during reserve ammo write tests
+
+```text
+Date/time: 2026-09-13 15:58 local
+Game version / TID / BID: 1.0.0 / 0100FF70134BA000 / 6547E06ECC5E8F4B
+Tool and version: sys-botbase-lab 2.5-lab2; switchlab 0.1.0
+Target effect: separate two reserve ammo candidates
+Visible state before: magazine 30/30, reserve 0060, HP 100/100, Lv 1
+Search type / relation / region: session `reserve-u16` narrowed 5 -> 2 after a
+  third reload took the reserve from 90 to 60
+Candidate address or expression: 0x555A6627CC and 0x555A6627D2, 6 bytes apart
+Data type: u16
+Original value or bytes: 60 at both
+Experimental value or bytes: 77 at the first, 88 at the second, then 77 as
+  u16, 77 as u32, 1 as u16 and 5 as u8 at the first
+Was the game paused?: no
+Visible result: none of the writes changed the reading, which came straight
+  back as 60 every time. The control write of 21 to the confirmed magazine
+  address held for over a second in the same session, so the write path was
+  working. Memory near the candidate reads as a repeating table,
+  30, 30, 60, 30, 30, 60, which looks like configuration data rather than live
+  state. A read 0x100 further on then failed, and the user reported the
+  console showing "Software was closed. An error occurred."
+Second-read result: pmdmntGetApplicationProcessId 527 (no application
+  process), svcDebugActiveProcess 0x40A01 InvalidProcessId,
+  svcReadDebugProcessMemory 0xE401 InvalidHandle. The game process is gone.
+  The sysmodule still answers and reports 2.5-lab2, so the console is healthy.
+Restored?: every write was paired with a restore, and each restore read back
+  the original. Nothing was written to the SD card and no cheat file exists.
+Survived state change?: not applicable
+Survived relaunch?: not applicable
+Verdict: reject the approach, not the addresses. I used writes as a discovery
+  method on two unconfirmed candidates, which AGENTS.md forbids: writes are
+  only for a single confirmed candidate. I cannot rule out that those writes
+  caused the crash, even though the values appeared not to take. The game is a
+  port of a 2004 title and may also be unstable on its own, but that is not a
+  defence for breaking the rule.
+Evidence paths: local/screens/20260913-155807-after-reload-3.jpg,
+  local/screens/20260913-155845-reserve-*.jpg (ignored)
+Next experiment: relaunch the game. Every heap address found so far is dead,
+  including the confirmed magazine address, so the searches start again. Narrow
+  to exactly one candidate before writing anything.
+```

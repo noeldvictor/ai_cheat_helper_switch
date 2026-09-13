@@ -74,7 +74,15 @@ it.
    at 11.4 MiB. Use the hole-tolerant reader.
 8. **A changed number on screen is not proof of a gameplay effect.** Test the
    behaviour: take a hit, fire the weapon, hit an enemy.
-9. **A heap address belongs to one launch.** Never put one in a cheat file.
+9. **Never write to a candidate to find out what it is.** Two reserve ammo
+   candidates were left after narrowing, and instead of asking for one more
+   in-game change I wrote test values into both to see which one responded.
+   The game crashed minutes later, every heap address found that session died
+   with it, and the work had to restart. Writes are for a single candidate that
+   narrowing has already isolated. Enforced by `guard.write_from_session`,
+   which refuses while more than one candidate remains. The cost of one more
+   reload is seconds; the cost of a crash is the whole session.
+10. **A heap address belongs to one launch.** Never put one in a cheat file.
    Promote only a pointer chain, module-relative address, or patch that has
    survived a full relaunch.
 

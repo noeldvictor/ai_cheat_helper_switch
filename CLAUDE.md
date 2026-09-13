@@ -65,6 +65,9 @@ The four that bite most often:
 - If a narrowed set collapses to zero, the width is wrong, not the address. The
   tool raises `CandidateCollapse` and keeps the session; do not pass
   `allow_empty` to silence it.
+- Never write to more than one candidate to work out which is which. Narrow to
+  a single address first and use `guard.write_from_session`, which refuses
+  otherwise. Writing into unidentified memory crashed the game once already.
 - A poke returns no reply. Never wait for one.
 - Never connect to the netloader port to test whether it is open.
 

@@ -148,3 +148,31 @@ def held_value(client: SysBotBase, address: int, width: int, value: int,
             log(f"restored 0x{address:X} to {original}")
         else:
             log(f"RESTORE FAILED: 0x{address:X} holds {now}, wanted {original}")
+
+
+class AmbiguousTarget(RuntimeError):
+    """Refused a write because the target address is not yet a single candidate."""
+
+
+def write_from_session(client, session, value: int, apply: bool = False,
+                       restore: bool = True, hold: float = 0.0, log=print) -> WriteResult:
+    """Write to the one surviving candidate of a narrowed session.
+
+    This is the sanctioned way to test a candidate. It refuses while more than
+    one candidate remains, because using writes to tell candidates apart means
+    writing to addresses whose purpose is unknown. Doing that on 2026-09-13
+    preceded a game crash and cost every address found that session. Narrow to
+    one candidate with more in-game changes instead.
+    """
+    if len(session.candidates) != 1:
+        raise AmbiguousTarget(
+            f"session '{session.label}' still has {len(session.candidates)} candidates. "
+            "Narrow it to one with another in-game change before writing. Do not write to "
+            "several candidates to see which one responds: that means writing to memory "
+            "whose purpose is unknown, and it has crashed the game before."
+        )
+    address = session.candidates[0]
+    expect = session.values.get(address)
+    return guarded_write(client, address, session.width, value,
+                         expect_original=expect, apply=apply, restore=restore,
+                         hold=hold, log=log)

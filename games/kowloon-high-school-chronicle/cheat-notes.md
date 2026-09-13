@@ -38,13 +38,13 @@ known field, then read the neighbouring values.
 | Cheat | Stage | Address form | Next step |
 |---|---|---|---|
 | Max Money | not started | none | read the visible amount, then exact search |
-| Max HP | searching | none | session `hp`, 3282 candidates; narrow after damage |
-| Full Heal | searching | none | same session as Max HP |
-| Infinite HP | searching | none | same session as Max HP |
+| Max HP | searching | sessions dead after a crash | restart the search after relaunch |
+| Full Heal | searching | sessions dead after a crash | restart the search after relaunch |
+| Infinite HP | searching | sessions dead after a crash | restart the search after relaunch |
 | Max Stats | not started | none | open the status screen and read each stat |
 | God Mode (damage patch) | not started | none | needs the current-HP address first |
-| Infinite Ammo (magazine) | confirmed | heap, this launch only | find a stable form across a relaunch |
-| Max Reserve Ammo | candidates | 5 addresses, heap | one more reload separates them |
+| Infinite Ammo (magazine) | candidates | address dead after a crash | re-find after relaunch; technique is proven |
+| Max Reserve Ammo | searching | addresses dead after a crash | restart the search; do not write to separate candidates |
 | Walk/Run Speed x2 | not started | none | look for a float near the player structure |
 | EXP x2, x4, x8, x16 | not started | none | needs the EXP-add instruction |
 | EXP x100 | not started | none | same patch site, multiply instead of shift |
@@ -165,6 +165,9 @@ of work as god mode.
   tracked somewhere else.
 - Next step: relaunch the game, find the value again, and run a pointer search
   across the two launches to get an address form that survives a restart.
+- 2026-09-13 15:58: the game crashed during unrelated write tests on the
+  reserve ammo candidates, so this address is dead. The finding stands and the
+  method is proven; only the address needs re-deriving after a relaunch.
 
 ### Max Reserve Ammo
 
