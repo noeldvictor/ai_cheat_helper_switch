@@ -18,9 +18,11 @@ cheat with Ultrahand or EdiZon exactly as before.
   side is `tools/switchlab`.
 - Working today: game identity (Title ID, Build ID, version), screenshots the
   AI can read, attach diagnosis, mapped region listing, hole-tolerant memory
-  snapshots, candidate scan sessions, and file transfer to and from the card.
-- Not yet built: guarded test writes, cheat-file generation and lint, pointer
-  search, instruction patching.
+  snapshots, candidate scan sessions, guarded single-address writes with
+  automatic restore, durable findings with signature-based relocation, and
+  file transfer to and from the card.
+- Not yet built: pointer search, cheat-file generation and lint, instruction
+  patching, hardware watchpoints.
 - Active game: Kowloon High-School Chronicle (`games/kowloon-high-school-chronicle/`).
   Legend of Mana and Torneko's Mystery Dungeon are deferred.
 

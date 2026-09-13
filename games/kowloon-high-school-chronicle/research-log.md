@@ -189,3 +189,45 @@ Next experiment: relaunch the game. Every heap address found so far is dead,
   including the confirmed magazine address, so the searches start again. Narrow
   to exactly one candidate before writing anything.
 ```
+
+## 2026-09-13 — session close
+
+```text
+Proven:
+  - The bridge works end to end. The repository's sys-botbase fork boots on
+    Atmosphere 1.11 / firmware 22.1, lists 166 memory regions in 0.06 s,
+    reads at about 5 MB/s, searches 787 MiB on the console in seconds, and
+    moves files to and from the SD card without an FTP app.
+  - The whole discovery loop works on a real target. The weapon magazine
+    counter was found at 0x5567E6C2E0 as u32, narrowed from 18767 candidates
+    to exactly one by firing rounds, and proven by a guarded write of 25 that
+    changed the display from 16/30 to 25/30 before the original was restored.
+
+Rejected:
+  - Searching reserve ammo as a 4-byte value. It is 2-byte and not on a 4-byte
+    boundary, so a 4-byte scan steps past it.
+  - Using writes to tell two candidates apart. This is now refused by the tool.
+  - AP and level as direct search targets. Both exceed the candidate cap.
+
+Current state:
+  - Game process crashed at about 15:58 and the console was powered off or put
+    to sleep afterwards; the bridge is unreachable as of session close.
+  - Every experimental write was paired with a restore that read back the
+    original value. Nothing was written to the SD card by the research tools.
+    No cheat file exists for this title. No save was touched.
+  - Nothing is frozen and no debugger is held: the sysmodule reattaches per
+    command and the process it was attached to no longer exists.
+
+All writes restored: yes.
+Game resumed and tools detached: yes, by the process ending and the console
+  powering down.
+
+Single best next experiment:
+  Relaunch the game, confirm the save is intact, and run
+  `switchlab findings relocate kowloon-high-school-chronicle --label ammo-magazine
+   --value <magazine count on screen>`.
+  This tests whether the stored byte signature can re-derive an address after a
+  process change. If it works, the same method recovers every future finding
+  cheaply, and the next target is HP, whose address unlocks max HP, full heal,
+  infinite HP and eventually god mode.
+```
