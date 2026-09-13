@@ -433,6 +433,81 @@ class SysBotBase:
 
         return _Paused()
 
+    # -- SD card files (lab2 build) -----------------------------------------
+    def fs_list(self, path: str) -> list:
+        """[(kind, size, name)] for a directory on the card."""
+        lines = self._command_lines(f"fsList {path}", lambda ln: ln == "END" or ln.startswith("ERR"))
+        if lines and lines[0].startswith("ERR"):
+            raise BridgeError(f"fsList {path}: {lines[0]}")
+        out = []
+        for ln in lines:
+            if ln == "END":
+                break
+            kind, size, name = ln.split("\t", 2)
+            out.append((kind, int(size), name))
+        return out
+
+    def fs_get(self, path: str) -> bytes:
+        if self._sock is None or self._reader is None:
+            raise BridgeError("not connected")
+        self._sock.settimeout(max(self.timeout, 60.0))
+        self._sock.sendall(f"fsGet {path}\r\n".encode("ascii"))
+        header = self._reader.read(8)
+        if len(header) != 8:
+            raise BridgeError("fsGet: short header (not the lab2 build?)")
+        size = int.from_bytes(header, "little")
+        if size == 0:
+            raise BridgeError(f"fsGet {path}: not found or unreadable")
+        data = b""
+        while len(data) < size:
+            chunk = self._reader.read(size - len(data))
+            if not chunk:
+                break
+            data += chunk
+        if len(data) != size:
+            raise BridgeError(f"fsGet {path}: expected {size} bytes, got {len(data)}")
+        return data
+
+    def fs_put(self, path: str, data: bytes) -> None:
+        """Upload bytes to `path` on the card. Verify with fs_get afterwards."""
+        if self._sock is None or self._reader is None:
+            raise BridgeError("not connected")
+        if " " in path:
+            raise BridgeError("paths with spaces are not supported")
+        reply = self.command(f"fsPut {path} {len(data)}", timeout=max(self.timeout, 60.0))
+        if reply != "OK":
+            raise BridgeError(f"fsPut {path}: {reply}")
+        self._sock.settimeout(max(self.timeout, 120.0))
+        self._sock.sendall(data)
+        raw = self._reader.readline()
+        done = raw.decode("ascii", errors="replace").strip()
+        if done != f"DONE {len(data)}":
+            raise BridgeError(f"fsPut {path}: {done}")
+
+    def fs_put_verified(self, path: str, data: bytes) -> None:
+        """Upload to a temp name, read it back, compare, then rename into place."""
+        tmp = path + ".upload"
+        self.fs_put(tmp, data)
+        back = self.fs_get(tmp)
+        if back != data:
+            self.fs_delete(tmp)
+            raise BridgeError(f"fsPut {path}: read-back mismatch, upload removed")
+        self.fs_rename(tmp, path)
+
+    def _fs_simple(self, cmd: str) -> None:
+        reply = self.command(cmd, timeout=max(self.timeout, 30.0))
+        if reply != "OK":
+            raise BridgeError(f"{cmd.split()[0]}: {reply}")
+
+    def fs_rename(self, src: str, dst: str) -> None:
+        self._fs_simple(f"fsRename {src} {dst}")
+
+    def fs_delete(self, path: str) -> None:
+        self._fs_simple(f"fsDelete {path}")
+
+    def fs_mkdir(self, path: str) -> None:
+        self._fs_simple(f"fsMkdir {path}")
+
     # -- screen ------------------------------------------------------------
     def screenshot(self) -> bytes:
         """Return the current screen as JPEG bytes."""

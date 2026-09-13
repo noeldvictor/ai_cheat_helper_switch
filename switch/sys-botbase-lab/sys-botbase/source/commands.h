@@ -72,3 +72,11 @@ void peekRaw(u64 offset, u64 size);
 void searchValue(u64 width, u64 value, u64* starts, u64* sizes, u64 count);
 Result pauseProcess(void);
 Result resumeProcess(void);
+
+// ---- sys-botbase-lab file transfer (fsxfer.c) ----
+void fsList(const char* path);
+void fsGet(const char* path);
+void fsPut(const char* path, u64 size);
+void fsRename(const char* from, const char* to);
+void fsDelete(const char* path);
+void fsMkdir(const char* path);

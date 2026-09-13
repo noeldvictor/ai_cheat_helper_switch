@@ -222,3 +222,70 @@ def test_paused_context_always_resumes():
     except RuntimeError:
         pass
     assert client._sock.sent[-2:] == [b"pause\r\n", b"resume\r\n"]
+
+
+class ScriptedIO:
+    """Reader/socket pair replaying exact bytes for fs protocol tests."""
+
+    def __init__(self, stream: bytes):
+        self.stream = stream
+        self.sent = []
+
+    # socket side
+    def settimeout(self, _t):
+        pass
+
+    def sendall(self, data):
+        self.sent.append(data)
+
+    def close(self):
+        pass
+
+    # reader side
+    def read(self, n):
+        out, self.stream = self.stream[:n], self.stream[n:]
+        return out
+
+    def readline(self, _hint=None):
+        i = self.stream.find(b"\n")
+        if i == -1:
+            out, self.stream = self.stream, b""
+            return out
+        out, self.stream = self.stream[: i + 1], self.stream[i + 1 :]
+        return out
+
+
+def _fs_client(stream: bytes) -> SysBotBase:
+    c = SysBotBase("203.0.113.1")
+    io_ = ScriptedIO(stream)
+    c._sock = io_
+    c._reader = io_
+    return c
+
+
+def test_fs_list_parses_until_end():
+    c = _fs_client(b"d\t0\tatmosphere\nf\t97925\texefs.nsp\nEND\n")
+    assert c.fs_list("/") == [("d", 0, "atmosphere"), ("f", 97925, "exefs.nsp")]
+    assert c._sock.sent == [b"fsList /\r\n"]
+
+
+def test_fs_get_and_put_protocol():
+    payload = b"hello switch"
+    c = _fs_client(len(payload).to_bytes(8, "little") + payload)
+    assert c.fs_get("/switch/x.bin") == payload
+
+    c = _fs_client(b"OK\n" + b"DONE 12\n")
+    c.fs_put("/switch/x.bin", payload)
+    assert c._sock.sent == [b"fsPut /switch/x.bin 12\r\n", payload]
+
+    c = _fs_client(b"ERR open 2\n")
+    with pytest.raises(BridgeError):
+        c.fs_put("/nope/x.bin", payload)
+
+
+def test_fs_put_verified_reads_back_and_renames():
+    payload = b"abc"
+    stream = b"OK\nDONE 3\n" + (3).to_bytes(8, "little") + payload + b"OK\n"
+    c = _fs_client(stream)
+    c.fs_put_verified("/switch/y.bin", payload)
+    assert c._sock.sent[-1] == b"fsRename /switch/y.bin.upload /switch/y.bin\r\n"

@@ -17,7 +17,7 @@
 #define TITLE_ID 0x430000000000000B
 #define HEAP_SIZE 0x00480000
 #define THREAD_SIZE 0x1A000
-#define VERSION_S "2.5-lab1"
+#define VERSION_S "2.5-lab2"
 
 typedef enum {
     Active = 0,
@@ -587,6 +587,48 @@ int argmain(int argc, char** argv)
     if (!strcmp(argv[0], "queryMemoryAll"))
     {
         queryMemoryAll();
+    }
+
+    if (!strcmp(argv[0], "fsList"))
+    {
+        if (argc != 2)
+            return 0;
+        fsList(argv[1]);
+    }
+
+    if (!strcmp(argv[0], "fsGet"))
+    {
+        if (argc != 2)
+            return 0;
+        fsGet(argv[1]);
+    }
+
+    if (!strcmp(argv[0], "fsPut"))
+    {
+        if (argc != 3)
+            return 0;
+        fsPut(argv[1], parseStringToInt(argv[2]));
+    }
+
+    if (!strcmp(argv[0], "fsRename"))
+    {
+        if (argc != 3)
+            return 0;
+        fsRename(argv[1], argv[2]);
+    }
+
+    if (!strcmp(argv[0], "fsDelete"))
+    {
+        if (argc != 2)
+            return 0;
+        fsDelete(argv[1]);
+    }
+
+    if (!strcmp(argv[0], "fsMkdir"))
+    {
+        if (argc != 2)
+            return 0;
+        fsMkdir(argv[1]);
     }
 
     if (!strcmp(argv[0], "peekRaw"))

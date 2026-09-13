@@ -14,7 +14,15 @@ adds research commands that move the expensive work onto the Switch:
 | `peekRaw <addr> <size>` | binary read: 8-byte little-endian length, then the bytes |
 | `search <width> <value> <start> <size> [<start> <size> ...]` | on-device exact-value search; replies with matching addresses |
 | `pause` / `resume` | hold the game frozen for an atomic snapshot; auto-resume on disconnect |
+| `fsList <dir>` | lines `f|d<TAB>size<TAB>name`, then `END` (lab2) |
+| `fsGet <path>` | binary: 8-byte length, then the file (lab2) |
+| `fsPut <path> <size>` | replies `OK`, reads `size` raw bytes from the socket, replies `DONE <n>` (lab2) |
+| `fsRename <a> <b>`, `fsDelete <p>`, `fsMkdir <d>` | reply `OK` or `ERR <errno>` (lab2) |
 | `getVersion` | reports `2.5-lab<N>` |
+
+The file commands make the PC able to push and pull SD-card files without an
+FTP app. The user chose this knowing sys-botbase is an unauthenticated service
+on the local network; keep the console on a trusted LAN.
 
 Build (needs Docker; produces `sys-botbase/sys-botbase.nsp`):
 

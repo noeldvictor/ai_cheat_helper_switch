@@ -100,6 +100,33 @@ def cmd_scan(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_files(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    with SysBotBase(_host(args), args.port, timeout=60) as client:
+        if args.files_cmd == "ls":
+            for kind, size, name in client.fs_list(args.path):
+                print(f"{kind} {size:>10}  {name}")
+        elif args.files_cmd == "get":
+            data = client.fs_get(args.remote)
+            Path(args.local).write_bytes(data)
+            print(f"got {args.remote} -> {args.local} ({len(data)} bytes)")
+        elif args.files_cmd == "put":
+            data = Path(args.local).read_bytes()
+            client.fs_put_verified(args.remote, data)
+            print(f"put {args.local} -> {args.remote} ({len(data)} bytes, verified by read-back)")
+        elif args.files_cmd == "mkdir":
+            client.fs_mkdir(args.path)
+            print("ok")
+        elif args.files_cmd == "rm":
+            client.fs_delete(args.path)
+            print("ok")
+        elif args.files_cmd == "mv":
+            client.fs_rename(args.src, args.dst)
+            print("ok")
+    return 0
+
+
 def cmd_screenshot(args: argparse.Namespace) -> int:
     with SysBotBase(_host(args), args.port) as client:
         path = capture_screenshot(client, label=args.label)
@@ -160,6 +187,16 @@ def build_parser() -> argparse.ArgumentParser:
     w.add_argument("--label", required=True)
     w.add_argument("--limit", type=int, default=20)
     s.set_defaults(func=cmd_scan)
+
+    s = sub.add_parser("files", help="SD card files through the lab2 build (paths like /switch/x.nro)")
+    fs = s.add_subparsers(dest="files_cmd", required=True)
+    a = fs.add_parser("ls"); a.add_argument("path")
+    a = fs.add_parser("get"); a.add_argument("remote"); a.add_argument("local")
+    a = fs.add_parser("put"); a.add_argument("local"); a.add_argument("remote")
+    a = fs.add_parser("mkdir"); a.add_argument("path")
+    a = fs.add_parser("rm"); a.add_argument("path")
+    a = fs.add_parser("mv"); a.add_argument("src"); a.add_argument("dst")
+    s.set_defaults(func=cmd_files)
 
     s = sub.add_parser("screenshot", help="save the current screen to local/screens/")
     s.add_argument("--label", default="screen")
