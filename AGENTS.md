@@ -319,7 +319,25 @@ working session with:
 
 ## Research records
 
-Use `games/<game-slug>/research-log.md`. Each experiment should include:
+Two files per game, with different jobs. Keep both current.
+
+`games/<game-slug>/cheat-notes.md` holds the current state of every cheat,
+updated in place. It opens with the Build ID and a status table, then one
+section per cheat containing the stage, the visible value, the data type, the
+address found this launch, the stable form (pointer chain, module offset, or
+patch site), the original value or instruction, the cheat code, whether it
+survived a relaunch, and the next step. Use these stages:
+
+`not started`, `searching`, `candidates`, `confirmed` (one address proven to
+control the effect by a reversible write), `stable` (survives a relaunch),
+`encoded` (cheat file entry written and linted), `verified` (passes the
+definition of done), `blocked`, `rejected`.
+
+Write the notes as work happens, not at the end. When a cheat changes stage,
+update its section and the status table in the same edit.
+
+`games/<game-slug>/research-log.md` is the chronological record and is
+append-only. Each experiment should include:
 
 ```text
 Date/time:
@@ -360,12 +378,14 @@ docs/
   sources.md
 games/
   <game-slug>/
-    game.md
-    research-log.md
+    game.md          identity, versions, requested effects
+    cheat-notes.md   per-cheat state, updated in place
+    research-log.md  chronological experiment record, append-only
     evidence/
     cheats/
       <BUILD_ID>.txt
 tools/
+switch/            sysmodule fork source and recovery binaries
 ```
 
 - The helper runs on the Linux machine that hosts Claude Code. Use bash.

@@ -11,6 +11,16 @@ cheats the user wants, with the technique and difficulty for each, is in the
 active game's card under `games/`. `AGENTS.md` section 6a explains which
 technique fits which kind of effect.
 
+Keep two files current for the active game. `cheat-notes.md` holds the state of
+each cheat and is edited in place; update the section and the status table
+together whenever a cheat changes stage. `research-log.md` is append-only.
+Write to both while working, not at the end of a session.
+
+Disassembly tooling on this machine: capstone 5.0.6 for targeted disassembly
+inside the helper, and Ghidra 11.3.2 at `~/src/ghidra_11.3.2_PUBLIC` with a
+bridge script at `~/ghidramcp` for analysis that needs cross-references. Code
+to analyse is read from the running process, never from game files.
+
 ## Writing style
 
 Write cleanly and directly. Use plain language. State the idea instead of

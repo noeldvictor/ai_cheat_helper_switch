@@ -170,6 +170,47 @@ Git.
 8. Legend of Mana crashed at launch with sys-botbase installed. Untested
    whether the two are related; capture the crash type before retrying.
 
+## Disassembly and code patches
+
+Four of the requested cheats need the game's own code changed, not a value
+written: true god mode, the five EXP multipliers, and probably fast forward.
+Money, attack and the HP lock do not.
+
+Where the code comes from: the game's main module is mapped in the running
+process as readable code, 66.7 MiB for Kowloon. We read it out of the live
+process the way a debugger does. No game files, no keys, nothing that leaves
+this machine. Dumps go under `local/`, which Git ignores.
+
+Tools already on this machine:
+
+- **capstone 5.0.6**, a Python ARM64 disassembler. Best for targeted work
+  inside the helper: read a window around an address, print the instructions,
+  identify the one to change. No export step, so it fits the search loop.
+- **Ghidra 11.3.2** at `~/src/ghidra_11.3.2_PUBLIC`, with a bridge script at
+  `~/ghidramcp` and Java 17 available. Best for finding things, because it
+  gives cross-references and function boundaries that capstone alone does not.
+
+The hard part is not disassembling. It is finding the one instruction that
+writes the value. Three ways to do that, in order of preference:
+
+1. **Hardware watchpoint.** Set a breakpoint on the EXP address and let the
+   game tell us which instruction wrote it. This is the fastest and most
+   reliable method. `svcSetHardwareBreakPoint` is already in the sysmodule's
+   permitted syscall list, so the fork can gain this. It needs a debug event
+   loop and thread context reads, which Noexes already implements and can be
+   used as a reference. This is the single feature that makes the code cheats
+   practical, and it should be built before attempting the EXP multipliers.
+2. **Static analysis.** Find code referencing the field's offset within its
+   structure. Works, but slow on a 66 MiB binary with no symbols.
+3. **Engine metadata.** If the game is Unity with IL2CPP, method names may be
+   recoverable, which would make the EXP function findable by name. Worth one
+   minute to check for `il2cpp` and `UnityEngine` strings in the main module.
+   Breeze, already installed on the console, also builds function maps for
+   Unity and Unreal titles.
+
+Planned order: add capstone-based disassembly to the helper, check the engine
+type, add the watchpoint command to the fork, then attempt the EXP patch.
+
 ## Milestones
 
 1. Done 2026-09-13: bridge client, identity, screenshot, diagnose, region

@@ -72,9 +72,13 @@ trainers.
 6. **PC**: one candidate gets a small reversible test write after you say go,
    then the original is restored.
 7. **Switch**: relaunch; the AI validates a pointer chain or static address.
-8. **Repository**: the cheat file lands in `games/<slug>/cheats/<BUILD_ID>.txt`.
-   Copy it to `sdmc:/atmosphere/contents/<TITLE_ID>/cheats/` and toggle it
-   in Ultrahand or EdiZon.
+8. **Repository**: the cheat file lands in `games/<slug>/cheats/<BUILD_ID>.txt`
+   and gets copied to the card over Wi-Fi. Toggle it in Ultrahand or EdiZon.
+
+Progress is tracked in two files per game. `cheat-notes.md` holds the current
+state of each cheat and is updated in place as work happens, so you can see at
+a glance which cheats are searching, confirmed, encoded, or verified.
+`research-log.md` is the append-only record of what was tried and observed.
 
 The full design, trade-offs, and lessons learned are in `docs/design.md`.
 
@@ -85,7 +89,8 @@ copy and paste:
 
 ```text
 games/<game-slug>/cheats/<BUILD_ID>.txt   Atmosphère cheat file, copy as-is
-games/<game-slug>/game.md                 identity, versions, status
+games/<game-slug>/game.md                 identity, versions, requested effects
+games/<game-slug>/cheat-notes.md          state of each cheat, updated as we go
 games/<game-slug>/research-log.md         evidence for every experiment
 ```
 
@@ -117,10 +122,11 @@ USER_PROFILE.md                     Non-secret user and platform facts
 docs/design.md                      Architecture, bridge trade-off, lessons learned
 docs/sources.md                     Version-sensitive sources and check dates
 .agents/skills/develop-switch-cheats/  Switch cheat workflow skill and references
-games/<slug>/                       Per-game card, research log, evidence, cheats
+games/<slug>/                       Card, cheat notes, research log, evidence, cheats
+switch/sys-botbase-lab/             Sysmodule fork source and recovery binaries
 tools/switchlab/                    Python helper (bridge, identity, regions, snapshot, CLI)
 tools/tests/                        Unit tests with a fake bridge
-local/                              Ignored: downloads, screenshots, snapshots
+local/                              Ignored: downloads, screenshots, snapshots, dumps
 ```
 
 Raw memory dumps, saves, keys, credentials, console identifiers, and IP
